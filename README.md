@@ -1,9 +1,11 @@
-# DNDStoryTelling
+# D&D Story Telling
 
-An automated story generation tool for Dungeons & Dragons sessions that processes audio/text recordings and generates narrative summaries using AI.
+An automated story generation tool for Dungeons & Dragons sessions that processes audio/text recordings and generates narrative summaries using AI, featuring a user-friendly web interface.
 
 ## Features
 
+- User-friendly web interface with drag-and-drop file upload
+- Real-time chat interface for AI interaction
 - Audio to text conversion using OpenAI Whisper
 - Story generation using GPT-4
 - Confluence Cloud integration for story publishing
@@ -11,29 +13,58 @@ An automated story generation tool for Dungeons & Dragons sessions that processe
 - Session continuity tracking
 - Docker support for easy deployment
 
-## Getting Started
+## Prerequisites
 
-### Prerequisites
-
-- Python 3.11 or higher
-- PostgreSQL 15 or higher
-- Docker (optional)
-- FFmpeg (for audio processing)
+- Docker and Docker Compose
 - OpenAI API key
 - Confluence Cloud API token
 
-### Clone the Repository
+## Quick Start
 
+1. Clone the repository:
 ```bash
-git clone git@github.com:CasperHCH/DNDStoryTelling.git
+git clone https://github.com/CasperHCH/DNDStoryTelling.git
 cd DNDStoryTelling
 ```
 
-### Installation
+2. Create and configure .env file:
+```bash
+cp .env.example .env
+# Edit .env with your API keys and settings
+```
 
-#### Local Development Setup
+3. Build and run with Docker:
+```bash
+docker-compose up -d
+```
 
-1. Create and activate a virtual environment:
+4. Access the application:
+   - Open http://localhost:8000 in your browser
+   - Use the drag-and-drop interface to upload files
+   - Interact with the AI through the chat interface
+
+## Usage Guide
+
+### File Upload
+- Drag and drop your D&D session recording or text file
+- Supported formats: .mp3, .wav (audio), .txt (text)
+- Maximum file size: Unlimited (dependent on server capacity)
+
+### AI Interaction
+- Chat with the AI to refine the story
+- Provide context and clarifications
+- Specify tone and style preferences
+- Review and approve generated content
+
+### Publishing to Confluence
+- Review the final story
+- Select parent page in Confluence
+- Approve for publishing
+
+## Development Setup
+
+### Local Development
+1. Create virtual environment:
 ```bash
 python -m venv venv
 .\venv\Scripts\activate
@@ -44,102 +75,37 @@ python -m venv venv
 pip install -r requirements.txt
 ```
 
-3. Install FFmpeg:
-   - Download from: https://ffmpeg.org/download.html
-   - Add to system PATH
-
-4. Create .env file:
+3. Run the application:
 ```bash
-cp .env.example .env
+uvicorn app.main:app --reload
 ```
 
-5. Configure your .env file with:
-   - Database credentials
-   - OpenAI API key
-   - Confluence Cloud token
-   - Secret key for JWT
-
-#### Docker Setup
-
-1. Build and run using Docker Compose:
-```bash
-docker-compose up --build
+### Project Structure
+```
+DNDStoryTelling/
+├── app/
+│   ├── static/          # Static files (JS, CSS)
+│   ├── templates/       # HTML templates
+│   ├── routes/          # API routes
+│   ├── services/        # Business logic
+│   ├── models/          # Database models
+│   └── auth/           # Authentication
+├── postgres/           # PostgreSQL configuration
+├── tests/             # Test files
+├── docker-compose.yml
+├── Dockerfile
+└── requirements.txt
 ```
 
 ## Configuration
 
 ### Environment Variables
-
 - `DATABASE_URL`: PostgreSQL connection string
-- `SECRET_KEY`: JWT secret key
-- `OPENAI_API_KEY`: Your OpenAI API key
-- `CONFLUENCE_API_TOKEN`: Confluence Cloud API token
-- `CONFLUENCE_URL`: Your Confluence instance URL
+- `SECRET_KEY`: Application secret key
+- `OPENAI_API_KEY`: OpenAI API key
+- `CONFLUENCE_API_TOKEN`: Confluence Cloud token
+- `CONFLUENCE_URL`: Confluence instance URL
 - `DEBUG`: Debug mode (True/False)
-
-### Database Setup
-
-1. Create PostgreSQL database:
-```bash
-createdb dndstory
-```
-
-2. Run migrations:
-```bash
-alembic upgrade head
-```
-
-## Usage
-
-### Starting the Application
-
-1. Local development:
-```bash
-uvicorn app.main:app --reload
-```
-
-2. Docker:
-```bash
-docker-compose up
-```
-
-### Processing a D&D Session
-
-1. Upload your session recording or text file through the API
-2. Review and verify the generated story
-3. Approve for publishing to Confluence
-
-### API Endpoints
-
-- `POST /auth/register`: Register new user
-- `POST /auth/token`: Get authentication token
-- `POST /story/upload`: Upload session recording/text
-- `POST /confluence/publish`: Publish story to Confluence
-
-## Testing
-
-Run the test suite:
-
-```bash
-pytest
-```
-
-For coverage report:
-
-```bash
-pytest --cov=app --cov-report=html
-```
-
-## Deployment
-
-### Synology DS718+
-
-1. Install Docker Package from Package Center
-2. Upload docker-compose.yml and .env files
-3. Run:
-```bash
-docker-compose up -d
-```
 
 ## Contributing
 
@@ -152,7 +118,3 @@ docker-compose up -d
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
-
-## Support
-
-For support, please open an issue in the GitHub repository.

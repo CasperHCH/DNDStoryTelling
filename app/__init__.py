@@ -8,6 +8,10 @@ app = FastAPI(title="D&D Story Telling")
 async def startup():
     await init_db()
 
+@app.get("/")
+async def root():
+    return {"message": "D&D Story Telling API"}
+
 app.include_router(auth.router)
 app.include_router(story.router)
 app.include_router(confluence.router)

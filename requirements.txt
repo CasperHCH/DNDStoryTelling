@@ -3,6 +3,7 @@ fastapi==0.104.1
 uvicorn[standard]==0.24.0
 python-multipart==0.0.6
 pydantic==2.4.2
+pydantic-settings==2.0.3
 python-jose[cryptography]==3.3.0
 passlib[bcrypt]==1.7.4
 
@@ -31,3 +32,13 @@ python-dotenv==1.0.0
 pytest==7.4.3
 pytest-asyncio==0.21.1
 pytest-cov==4.1.0
+
+# UI Dependencies
+jinja2==3.1.2
+aiofiles==23.2.1
+python-socketio==5.10.0
+websockets==11.0.3
+
+# UI Testing
+pytest-playwright==0.4.3
+pytest-html==4.1.1
