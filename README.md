@@ -99,13 +99,20 @@ DNDStoryTelling/
 
 ## Configuration
 
-### Environment Variables
-- `DATABASE_URL`: PostgreSQL connection string
-- `SECRET_KEY`: Application secret key
-- `OPENAI_API_KEY`: OpenAI API key
-- `CONFLUENCE_API_TOKEN`: Confluence Cloud token
-- `CONFLUENCE_URL`: Confluence instance URL
-- `DEBUG`: Debug mode (True/False)
+To configure the application, use the web UI to provide the following details:
+
+1. **Confluence URL**: The base URL of your Confluence instance (e.g., `https://your-domain.atlassian.net`).
+2. **Confluence API Token**: Your API token for authenticating with Confluence.
+3. **Confluence Parent Page ID**: The ID of the parent page where stories will be published.
+4. **OpenAI API Key**: Your API key for accessing OpenAI services.
+
+### Steps:
+1. Start the application using Docker.
+2. Open the web UI in your browser.
+3. Navigate to the Configuration section.
+4. Fill in the required fields and click "Save Configuration."
+
+The application will validate and store the provided settings.
 
 ## Contributing
 

@@ -9,14 +9,25 @@ import os
 from fastapi.testclient import TestClient
 from app import app
 
-TEST_DATABASE_URL = "postgresql://user:password@localhost:5432/dndstory_test"
+TEST_DATABASE_URL = "postgresql+asyncpg://user:password@localhost:5432/dndstory_test"
 
 @pytest.fixture(scope="session")
 def engine():
     engine = create_engine(TEST_DATABASE_URL)
-    Base.metadata.create_all(engine)
+    Base.metadata.create_all(bind=engine)
     yield engine
-    Base.metadata.drop_all(engine)
+    Base.metadata.drop_all(bind=engine)
+
+@pytest.fixture(scope="session")
+def session(engine):
+    connection = engine.connect()
+    transaction = connection.begin()
+    Session = sessionmaker(bind=connection)
+    session = Session()
+    yield session
+    session.close()
+    transaction.rollback()
+    connection.close()
 
 @pytest.fixture
 def db_session(engine):
@@ -31,9 +42,10 @@ def test_user(db_session):
     user = User(
         username="testuser",
         hashed_password=get_password_hash("testpass"),
-        openai_api_key="test_openai_key",
-        confluence_api_token="test_confluence_token",
-        confluence_url="https://test.atlassian.net"
+        confluence_parent_page_id="123456789",  # Example: Replace with the ID of the parent page in Confluence where new pages will be created
+        openai_api_key="test_openai_key",  # Example: Replace with your OpenAI API key
+        confluence_api_token="test_confluence_token",  # Example: Replace with your Confluence API token
+        confluence_url="https://test.atlassian.net"  # Example: Replace with your Confluence Cloud URL
     )
     db_session.add(user)
     db_session.commit()

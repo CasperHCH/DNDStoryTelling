@@ -1,52 +1,67 @@
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
-env/
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
+# PowerShell specific
+*.ps1~
+*.psm1~
+*.psd1~
+*.ps1xml
+*.pssc
+*.ps1test
+*.ps1user
+*.ps1proj
+*.ps1proj.user
 
-# Virtual Environment
-venv/
-ENV/
-c:\repos\DNDStoryTelling\venv\Scripts\activate.bat
+# Logs
+*.log
+logs/
+*.evtx
 
-# IDE
-.idea/
-.vscode/
+# Output and temp files
+*.tmp
+*.bak
 *.swp
 *.swo
+*.cache
+*.DS_Store
+Thumbs.db
 
-# Environment variables
+# Secrets and credentials
+*.secret
+*.key
+*.pfx
+*.pem
+*.cer
+*.crt
+
+# Environment files
 .env
+.env.*
 
-# Test coverage
-htmlcov/
-.coverage
-.coverage.*
-coverage.xml
-*.cover
+# VSCode and IDE files
+.vscode/
+.idea/
+*.code-workspace
 
-# Docker
-.docker/
+# Node/npm (if used for tools)
+node_modules/
+npm-debug.log*
 
-# Project specific
-*.wav
-*.mp3
-*.ogg
-temp/
+# Python (if used for tools)
+__pycache__/
+*.pyc
+
+# Test results
+test-results/
+coverage/
+
+# PowerShell Gallery output
+*.nupkg
+
+# Misc
+*.zip
+*.tar.gz
+*.7z
+
+# Ignore local configuration
+*.local
+
+# Windows PowerShell history
+ConsoleHost_history.txt

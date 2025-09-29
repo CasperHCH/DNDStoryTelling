@@ -16,6 +16,8 @@ services:
         condition: service_healthy
     volumes:
       - .:/app
+      - ./alembic.ini:/app/alembic.ini
+      - ./alembic:/app/alembic
     working_dir: /app
 
   db:

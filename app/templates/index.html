@@ -35,5 +35,25 @@
             </button>
         </div>
     </div>
+
+    <!-- Configuration Area -->
+    <div class="bg-white p-6 rounded-lg shadow-md">
+        <h2 class="text-lg font-bold mb-4">Configuration</h2>
+        <form id="config-form">
+            <label for="confluence-url" class="block text-sm font-medium text-gray-700">Confluence URL</label>
+            <input type="text" id="confluence-url" class="mt-1 p-2 border rounded w-full" placeholder="https://your-domain.atlassian.net">
+
+            <label for="confluence-api-token" class="block text-sm font-medium text-gray-700 mt-4">Confluence API Token</label>
+            <input type="text" id="confluence-api-token" class="mt-1 p-2 border rounded w-full" placeholder="Your API Token">
+
+            <label for="confluence-parent-page-id" class="block text-sm font-medium text-gray-700 mt-4">Confluence Parent Page ID</label>
+            <input type="text" id="confluence-parent-page-id" class="mt-1 p-2 border rounded w-full" placeholder="123456789">
+
+            <label for="openai-api-key" class="block text-sm font-medium text-gray-700 mt-4">OpenAI API Key</label>
+            <input type="text" id="openai-api-key" class="mt-1 p-2 border rounded w-full" placeholder="sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx">
+
+            <button type="submit" class="mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Save Configuration</button>
+        </form>
+    </div>
 </div>
 {% endblock %}
