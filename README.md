@@ -114,6 +114,71 @@ To configure the application, use the web UI to provide the following details:
 
 The application will validate and store the provided settings.
 
+## Installation Guide: Running the Program as a Docker Image
+
+This guide will walk you through the steps to install and run the program as a Docker image.
+
+### Prerequisites
+
+1. **Docker Installed**: Ensure Docker is installed on your system. You can download it from [Docker's official website](https://www.docker.com/).
+2. **Docker Compose Installed**: Install Docker Compose if it is not included with your Docker installation.
+3. **Environment Variables**: Prepare the following environment variables:
+   - `OPENAI_API_KEY`: Your OpenAI API key.
+   - `CONFLUENCE_API_TOKEN`: Your Confluence API token.
+   - `CONFLUENCE_URL`: The base URL of your Confluence instance.
+   - `CONFLUENCE_PARENT_PAGE_ID`: The ID of the parent page where stories will be published.
+
+### Steps
+
+1. **Clone the Repository**
+   ```bash
+   git clone https://github.com/CasperHCH/Powershell.git
+   cd Powershell/DNDStoryTelling
+   ```
+
+2. **Set Up Environment Variables**
+   Create a `.env` file in the `DNDStoryTelling` directory and add the following:
+   ```env
+   OPENAI_API_KEY=your_openai_api_key
+   CONFLUENCE_API_TOKEN=your_confluence_api_token
+   CONFLUENCE_URL=https://your-domain.atlassian.net
+   CONFLUENCE_PARENT_PAGE_ID=123456789
+   ```
+
+3. **Build the Docker Image**
+   Run the following command to build the Docker image:
+   ```bash
+   docker build -t dndstorytelling:latest .
+   ```
+
+4. **Run the Application**
+   Use Docker Compose to start the application:
+   ```bash
+   docker-compose up -d
+   ```
+
+   This will start the application and its dependencies (e.g., PostgreSQL database).
+
+5. **Access the Application**
+   Open your browser and navigate to:
+   ```
+   http://localhost:8000
+   ```
+
+6. **Stop the Application**
+   To stop the application, run:
+   ```bash
+   docker-compose down
+   ```
+
+### Notes
+
+- Ensure the `.env` file is not shared publicly as it contains sensitive information.
+- If you encounter any issues, check the logs using:
+  ```bash
+  docker-compose logs
+  ```
+
 ## Contributing
 
 1. Fork the repository
