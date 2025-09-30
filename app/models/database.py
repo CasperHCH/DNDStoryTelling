@@ -10,7 +10,13 @@ load_dotenv()
 
 DATABASE_URL = os.getenv("DATABASE_URL")
 
-# Ensure the asyncpg driver is used
+if not DATABASE_URL:
+    raise ValueError("DATABASE_URL environment variable is required")
+
+# Ensure the asyncpg driver is used for async operations
+if "postgresql://" in DATABASE_URL and "+asyncpg" not in DATABASE_URL:
+    DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+asyncpg://")
+
 engine = create_async_engine(DATABASE_URL, echo=True)
 SessionLocal = sessionmaker(engine, class_=AsyncSession)
 Base = declarative_base()

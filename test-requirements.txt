@@ -3,6 +3,7 @@ pytest==7.4.3
 pytest-asyncio==0.21.1
 pytest-cov==4.1.0
 pytest-mock==3.11.1
+pytest-html==3.2.0
 
 # Database drivers for testing
 psycopg2-binary==2.9.7  # For synchronous PostgreSQL operations in tests
@@ -12,3 +13,7 @@ aiosqlite==0.19.0       # For SQLite fallback in tests
 httpx==0.25.0           # For async HTTP client testing
 factory-boy==3.3.0      # For test data generation
 freezegun==1.2.2        # For time-based testing
+
+# UI Testing
+playwright==1.39.0
+pytest-playwright==0.4.3
