@@ -8,7 +8,7 @@ This document provides guidance on setting up the testing environment and troubl
 ### Main Requirements
 - `requirements.txt`: Contains production dependencies including `asyncpg` for async PostgreSQL operations
 
-### Test Requirements  
+### Test Requirements
 - `test-requirements.txt`: Contains testing-specific dependencies including:
   - `psycopg2-binary`: For synchronous PostgreSQL operations in tests
   - `pytest` and related testing tools
@@ -33,7 +33,7 @@ This document provides guidance on setting up the testing environment and troubl
 
 **Cause**: The application is trying to use synchronous PostgreSQL operations but `psycopg2` is not installed.
 
-**Solution**: 
+**Solution**:
 1. Install test requirements: `pip install -r test-requirements.txt`
 2. Ensure DATABASE_URL uses `postgresql+asyncpg://` scheme for async operations
 3. For sync operations in tests, `psycopg2-binary` will be used automatically
@@ -69,7 +69,7 @@ This document provides guidance on setting up the testing environment and troubl
 - Includes coverage reporting
 - Runs on every push and PR
 
-### UI Tests (`ui-tests.yml`)  
+### UI Tests (`ui-tests.yml`)
 - Tests the web interface with Playwright
 - Starts full application stack
 - Captures screenshots on failure
@@ -109,7 +109,7 @@ This document provides guidance on setting up the testing environment and troubl
    ```bash
    # Unit tests
    pytest --cov=app --cov-report=html
-   
+
    # UI tests (requires running server)
    pytest tests/ui/ --headed
    ```

@@ -1,33 +1,81 @@
-from dotenv import load_dotenv
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
-from sqlalchemy.orm import declarative_base
-import os
+"""Database configuration and connection management."""
 
-# Load environment variables from .env
-load_dotenv()
+import logging
+from typing import AsyncGenerator
+from sqlalchemy import create_engine, text
+from sqlalchemy.orm import sessionmaker, declarative_base
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, AsyncEngine
+from sqlalchemy.pool import NullPool
 
-DATABASE_URL = os.getenv("DATABASE_URL")
+from app.config import get_settings
 
-if not DATABASE_URL:
+logger = logging.getLogger(__name__)
+settings = get_settings()
+
+if not settings.DATABASE_URL:
     raise ValueError("DATABASE_URL environment variable is required")
 
 # Ensure the asyncpg driver is used for async operations
+DATABASE_URL = settings.DATABASE_URL
 if "postgresql://" in DATABASE_URL and "+asyncpg" not in DATABASE_URL:
     DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+asyncpg://")
 
-engine = create_async_engine(DATABASE_URL, echo=True)
-SessionLocal = sessionmaker(engine, class_=AsyncSession)
+# Configure engine with connection pooling
+engine: AsyncEngine = create_async_engine(
+    DATABASE_URL,
+    echo=settings.DEBUG,
+    # Connection pool settings
+    pool_size=5,  # Number of connections to maintain in pool
+    max_overflow=10,  # Additional connections beyond pool_size
+    pool_pre_ping=True,  # Validate connections before use
+    pool_recycle=3600,  # Recycle connections every hour
+    # Use NullPool for testing to avoid connection issues
+    poolclass=NullPool if "test" in DATABASE_URL else None,
+)
+
+# Configure session factory
+SessionLocal = sessionmaker(
+    engine, 
+    class_=AsyncSession,
+    expire_on_commit=False,  # Don't expire objects after commit
+)
+
 Base = declarative_base()
 
-async def init_db():
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-
-async def get_db():
-    db = SessionLocal()
+async def init_db() -> None:
+    """Initialize database tables and run health check."""
     try:
-        yield db
-    finally:
-        await db.close()
+        async with engine.begin() as conn:
+            # Test connection first
+            await conn.execute(text("SELECT 1"))
+            logger.info("Database connection established")
+            
+            # Create tables
+            await conn.run_sync(Base.metadata.create_all)
+            logger.info("Database tables initialized")
+            
+    except Exception as e:
+        logger.error(f"Failed to initialize database: {e}")
+        raise
+
+async def get_db() -> AsyncGenerator[AsyncSession, None]:
+    """Dependency to get database session."""
+    async with SessionLocal() as session:
+        try:
+            yield session
+        except Exception as e:
+            logger.error(f"Database session error: {e}")
+            await session.rollback()
+            raise
+        finally:
+            await session.close()
+
+async def health_check_db() -> bool:
+    """Check database health."""
+    try:
+        async with engine.begin() as conn:
+            await conn.execute(text("SELECT 1"))
+        return True
+    except Exception as e:
+        logger.error(f"Database health check failed: {e}")
+        return False
