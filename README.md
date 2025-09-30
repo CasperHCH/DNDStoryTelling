@@ -1,218 +1,441 @@
-# D&D Story Telling
+# 🎲 D&D Story Telling
 
-An automated story generation tool for Dungeons & Dragons sessions that processes audio/text recordings and generates narrative summaries using AI, featuring a user-friendly web interface.
+> **An AI-powered story generation platform for Dungeons & Dragons sessions**
 
-## Features
+Transform your D&D session recordings into compelling narrative summaries using cutting-edge AI. This application processes audio files, generates intelligent story summaries, and seamlessly publishes them to Confluence Cloud.
 
-- User-friendly web interface with drag-and-drop file upload
-- Real-time chat interface for AI interaction
-- Audio to text conversion using OpenAI Whisper
-- Story generation using GPT-4
-- Confluence Cloud integration for story publishing
-- Support for multiple audio formats (.mp3, .wav)
-- Session continuity tracking
-- Docker support for easy deployment
+![License](https://img.shields.io/badge/license-MIT-blue.svg)
+![Python](https://img.shields.io/badge/python-3.11+-green.svg)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.104.1-blue.svg)
+![Docker](https://img.shields.io/badge/docker-ready-blue.svg)
 
-## Prerequisites
+## ✨ Features
 
-- Docker and Docker Compose
-- OpenAI API key
-- Confluence Cloud API token
+### 🎯 Core Functionality
+- **🎤 Audio Processing**: Advanced speech-to-text using OpenAI Whisper with support for multiple formats
+- **🤖 AI Story Generation**: Intelligent narrative creation powered by OpenAI GPT models
+- **💬 Interactive Chat Interface**: Real-time AI conversation for story refinement
+- **📝 Text Input Support**: Direct text processing alongside audio capabilities
+- **🔄 Session Continuity**: Maintains context across multiple story generations
 
-## Quick Start
+### 🌐 Web Interface
+- **📱 Modern Responsive UI**: Clean, intuitive interface that works on all devices
+- **🖱️ Drag & Drop Upload**: Effortless file uploading with visual feedback
+- **⚡ Real-time Processing**: Live updates and progress indicators
+- **🎨 Rich Text Editor**: Formatted story editing and preview capabilities
 
-1. Clone the repository:
-```bash
-git clone https://github.com/CasperHCH/DNDStoryTelling.git
-cd DNDStoryTelling
-```
+### 🔗 Integrations
+- **☁️ Confluence Cloud**: Seamless story publishing to your team workspace
+- **🔐 Secure Authentication**: JWT-based user authentication and authorization
+- **📊 Health Monitoring**: Comprehensive system health and performance tracking
+- **🔧 Production Ready**: Complete Docker deployment with security hardening
 
-2. Create and configure .env file:
-```bash
-cp .env.example .env
-# Edit .env with your API keys and settings
-```
+### 🎵 Audio Support
+Supports all major audio formats:
+- **High Quality**: `.wav`, `.flac`
+- **Compressed**: `.mp3`, `.m4a`, `.ogg`
+- **Automatic Conversion**: Intelligent format normalization
+- **Large File Handling**: Configurable file size limits (default: 50MB)
 
-3. Build and run with Docker:
-```bash
-docker build -t dnd_storytelling .
-docker-compose up -d
-```
+## 🚀 Quick Start
 
-4. Run database migrations:
-```bash
-docker exec -it dnd_storytelling alembic upgrade head
-```
+### 📋 Prerequisites
 
-5. Access the application at `http://localhost:8000`.
+- **Docker & Docker Compose** (recommended)
+- **Python 3.11+** (for local development)
+- **OpenAI API Key** (for AI features)
+- **Confluence Cloud Access** (optional, for publishing)
 
-## Usage Guide
+### 🐳 Docker Deployment (Recommended)
 
-### File Upload
-- Drag and drop your D&D session recording or text file
-- Supported formats: .mp3, .wav (audio), .txt (text)
-- Maximum file size: Unlimited (dependent on server capacity)
-
-### AI Interaction
-- Chat with the AI to refine the story
-- Provide context and clarifications
-- Specify tone and style preferences
-- Review and approve generated content
-
-### Publishing to Confluence
-- Review the final story
-- Select parent page in Confluence
-- Approve for publishing
-
-## Development Setup
-
-### Local Development
-1. Create virtual environment:
-```bash
-python -m venv venv
-.\venv\Scripts\activate
-```
-
-2. Install dependencies:
-```bash
-pip install -r requirements.txt
-```
-
-3. Run the application:
-```bash
-uvicorn app.main:app --reload
-```
-
-### Project Structure
-```
-DNDStoryTelling/
-├── app/
-│   ├── static/          # Static files (JS, CSS)
-│   ├── templates/       # HTML templates
-│   ├── routes/          # API routes
-│   ├── services/        # Business logic
-│   ├── models/          # Database models
-│   └── auth/           # Authentication
-├── postgres/           # PostgreSQL configuration
-├── tests/             # Test files
-├── docker-compose.yml
-├── Dockerfile
-└── requirements.txt
-```
-
-## Configuration
-
-To configure the application, use the web UI to provide the following details:
-
-1. **Confluence URL**: The base URL of your Confluence instance (e.g., `https://your-domain.atlassian.net`).
-2. **Confluence API Token**: Your API token for authenticating with Confluence.
-3. **Confluence Parent Page ID**: The ID of the parent page where stories will be published.
-4. **OpenAI API Key**: Your API key for accessing OpenAI services.
-
-### Steps:
-1. Start the application using Docker.
-2. Open the web UI in your browser.
-3. Navigate to the Configuration section.
-4. Fill in the required fields and click "Save Configuration."
-
-The application will validate and store the provided settings.
-
-## Configuration Options
-
-The application requires the following environment variables to be set in the `.env` file:
-
-- `OPENAI_API_KEY`: Your OpenAI API key for GPT-4 and Whisper.
-- `CONFLUENCE_API_TOKEN`: API token for Confluence Cloud integration.
-- `DATABASE_URL`: Connection string for the PostgreSQL database.
-- `SECRET_KEY`: Secret key for JWT authentication.
-- `FFMPEG_PATH`: Path to the FFmpeg binary for audio processing.
-
-## Installing FFmpeg
-
-FFmpeg is required for audio processing. Follow these steps to install it:
-
-1. Download FFmpeg from the [official website](https://ffmpeg.org/download.html).
-2. Extract the downloaded archive.
-3. Add the `bin` directory to your system's PATH.
-
-To verify the installation, run:
-```bash
-ffmpeg -version
-```
-
-## Installation Guide: Running the Program as a Docker Image
-
-This guide will walk you through the steps to install and run the program as a Docker image.
-
-### Prerequisites
-
-1. **Docker Installed**: Ensure Docker is installed on your system. You can download it from [Docker's official website](https://www.docker.com/).
-2. **Docker Compose Installed**: Install Docker Compose if it is not included with your Docker installation.
-3. **Environment Variables**: Prepare the following environment variables:
-   - `OPENAI_API_KEY`: Your OpenAI API key.
-   - `CONFLUENCE_API_TOKEN`: Your Confluence API token.
-   - `CONFLUENCE_URL`: The base URL of your Confluence instance.
-   - `CONFLUENCE_PARENT_PAGE_ID`: The ID of the parent page where stories will be published.
-
-### Steps
-
-1. **Clone the Repository**
+1. **Clone the repository**:
    ```bash
    git clone https://github.com/CasperHCH/DNDStoryTelling.git
    cd DNDStoryTelling
    ```
 
-2. **Set Up Environment Variables**
-   Create a `.env` file in the `DNDStoryTelling` directory and add the following:
-   ```env
-   OPENAI_API_KEY=your_openai_api_key
-   CONFLUENCE_API_TOKEN=your_confluence_api_token
-   CONFLUENCE_URL=https://your-domain.atlassian.net
-   CONFLUENCE_PARENT_PAGE_ID=123456789
+2. **Configure environment**:
+   ```bash
+   cp .env.example .env
+   # Edit .env with your API keys (see Configuration section)
    ```
 
-3. **Build the Docker Image**
-   Run the following command to build the Docker image:
+3. **Deploy with Docker**:
    ```bash
-   docker build -t dndstorytelling:latest .
-   ```
-
-4. **Run the Application**
-   Use Docker Compose to start the application:
-   ```bash
+   # Production deployment
+   docker-compose -f docker-compose.prod.yml up -d
+   
+   # Or development environment
    docker-compose up -d
    ```
 
-   This will start the application and its dependencies (e.g., PostgreSQL database).
-
-5. **Access the Application**
-   Open your browser and navigate to:
-   ```
-   http://localhost:8000
-   ```
-
-6. **Stop the Application**
-   To stop the application, run:
+4. **Run database migrations**:
    ```bash
-   docker-compose down
+   docker exec -it dndstory-web alembic upgrade head
    ```
 
-### Notes
+5. **Access the application**:
+   - **Web Interface**: http://localhost:8000
+   - **API Documentation**: http://localhost:8000/docs
+   - **Health Check**: http://localhost:8000/health
 
-- Ensure the `.env` file is not shared publicly as it contains sensitive information.
-- If you encounter any issues, check the logs using:
-  ```bash
-  docker-compose logs
-  ```
+### 🖥️ Local Development
 
-## Contributing
+1. **Set up Python environment**:
+   ```bash
+   python -m venv venv
+   source venv/bin/activate  # On Windows: venv\Scripts\activate
+   pip install -r requirements.txt
+   ```
 
-1. Fork the repository
-2. Create feature branch
-3. Commit changes
-4. Push to branch
-5. Create Pull Request
+2. **Configure environment**:
+   ```bash
+   cp .env.example .env
+   # Edit .env file with your settings
+   ```
 
-## License
+3. **Run the application**:
+   ```bash
+   uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+   ```
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+### 📦 NAS Deployment
+
+For deployment on Synology, QNAP, or other NAS systems, see our comprehensive guides:
+- 📋 [Quick Deployment Checklist](./DEPLOYMENT-CHECKLIST.md)
+- 🔧 [NAS Deployment Guide](./NAS-DEPLOYMENT.md)
+- 🚀 [Production Deployment](./DEPLOYMENT.md)
+
+## ⚙️ Configuration
+
+### 🔐 Environment Variables
+
+Create a `.env` file with the following configuration:
+
+```bash
+# Environment Configuration
+ENVIRONMENT=production                    # development, test, production
+DEBUG=false                              # Set to true for development
+
+# Database Configuration
+DATABASE_URL=postgresql+asyncpg://user:password@db:5432/dndstory
+
+# Security Configuration
+SECRET_KEY=your-super-secret-key-that-should-be-at-least-32-characters-long
+ACCESS_TOKEN_EXPIRE_MINUTES=30
+
+# Host Configuration
+ALLOWED_HOSTS=localhost,127.0.0.1,yourdomain.com
+CORS_ORIGINS=http://localhost:8000,https://yourdomain.com
+
+# API Keys (Required for full functionality)
+OPENAI_API_KEY=your-openai-api-key-here
+CONFLUENCE_API_TOKEN=your-confluence-api-token-here
+CONFLUENCE_URL=https://your-domain.atlassian.net
+CONFLUENCE_PARENT_PAGE_ID=123456789
+
+# Application Settings
+APP_NAME=D&D Story Telling
+VERSION=1.0.0
+
+# File Upload Settings
+MAX_FILE_SIZE=52428800                   # 50MB in bytes
+UPLOAD_DIR=uploads
+SUPPORTED_AUDIO_FORMATS=mp3,wav,m4a,ogg,flac
+
+# Rate Limiting
+RATE_LIMIT_REQUESTS=100
+RATE_LIMIT_WINDOW=3600                   # 1 hour in seconds
+```
+
+### 🔑 API Keys Setup
+
+#### OpenAI API Key
+1. Visit [OpenAI Platform](https://platform.openai.com/)
+2. Create an account or sign in
+3. Navigate to **API Keys** section
+4. Generate a new secret key
+5. Add to your `.env` file as `OPENAI_API_KEY`
+
+#### Confluence Integration (Optional)
+1. Log in to your Confluence Cloud instance
+2. Go to **Account Settings** → **Security** → **API tokens**
+3. Create a new API token
+4. Add the following to your `.env`:
+   - `CONFLUENCE_API_TOKEN`: Your API token
+   - `CONFLUENCE_URL`: Your Confluence URL (e.g., `https://yourcompany.atlassian.net`)
+   - `CONFLUENCE_PARENT_PAGE_ID`: ID of the parent page for stories
+
+## 🛠️ Usage Guide
+
+### 1. 🎤 Processing Audio Files
+
+1. **Upload your recording**:
+   - Drag and drop your D&D session audio file
+   - Or click to browse and select file
+   - Supported formats: MP3, WAV, M4A, OGG, FLAC
+
+2. **Audio Processing**:
+   - Automatic speech-to-text transcription
+   - Language detection and optimization
+   - Progress tracking with real-time updates
+
+### 2. 🤖 AI Story Generation
+
+1. **Review Transcription**:
+   - Edit or refine the transcribed text
+   - Add context or clarifications
+   - Specify story preferences
+
+2. **Generate Story**:
+   - Click "Generate Story" to create narrative
+   - AI analyzes the session content
+   - Produces structured, engaging story summary
+
+### 3. 💬 Interactive Refinement
+
+1. **Chat with AI**:
+   - Ask for specific adjustments
+   - Request different tones or styles
+   - Add missing details or context
+
+2. **Iterative Improvement**:
+   - Multiple generation rounds
+   - Preserve session context
+   - Build upon previous versions
+
+### 4. 📤 Publishing Options
+
+1. **Review Final Story**:
+   - Preview formatted content
+   - Make final edits if needed
+   - Ensure quality and accuracy
+
+2. **Publish to Confluence** (Optional):
+   - Select target parent page
+   - Configure page title and formatting
+   - Publish with one click
+
+## 🏗️ Project Architecture
+
+### 📁 Directory Structure
+
+```
+DNDStoryTelling/
+├── 📱 app/                          # Main application code
+│   ├── 🔐 auth/                     # Authentication & authorization
+│   ├── 🛡️ middleware/               # Security & request middleware
+│   ├── 📊 models/                   # Database models & schemas
+│   ├── 🛣️ routes/                   # API endpoints & routing
+│   ├── ⚙️ services/                 # Business logic & external APIs
+│   ├── 🎨 static/                   # CSS, JavaScript, images
+│   ├── 📄 templates/                # HTML templates
+│   ├── 🔧 utils/                    # Utility functions & helpers
+│   ├── ⚙️ config.py                 # Application configuration
+│   └── 🚀 main.py                   # FastAPI application entry point
+├── 🗄️ alembic/                     # Database migration scripts
+├── 🐳 postgres/                     # PostgreSQL configuration
+├── 📄 docs/                         # Documentation files
+├── 🧪 tests/                        # Test suite
+│   ├── 🌐 ui/                       # UI/browser tests
+│   └── 🔧 test_*.py                 # Unit & integration tests
+├── 🛠️ scripts/                     # Utility scripts
+├── 📦 requirements.txt              # Python dependencies
+├── 🐳 docker-compose.yml           # Development Docker setup
+├── 🚀 docker-compose.prod.yml      # Production Docker setup
+├── 🔧 Dockerfile                   # Development Docker image
+├── 🚀 Dockerfile.prod              # Production Docker image
+├── ⚙️ .env.example                 # Environment template
+└── 📋 alembic.ini                  # Database migration config
+```
+
+### 🔧 Technology Stack
+
+#### Backend
+- **FastAPI**: Modern, fast web framework for building APIs
+- **SQLAlchemy**: Advanced ORM with async support
+- **PostgreSQL**: Robust relational database
+- **Alembic**: Database migration management
+- **Pydantic**: Data validation and serialization
+
+#### AI & Processing
+- **OpenAI Whisper**: State-of-the-art speech recognition
+- **OpenAI GPT**: Advanced language model for story generation
+- **PyDub**: Audio file processing and manipulation
+- **FFmpeg**: Audio format conversion and optimization
+
+#### Frontend
+- **Modern HTML5/CSS3/JavaScript**: Responsive, accessible UI
+- **WebSocket Support**: Real-time communication
+- **Progressive Enhancement**: Works without JavaScript
+
+#### Infrastructure
+- **Docker**: Containerized deployment
+- **Nginx**: Reverse proxy and static file serving
+- **Gunicorn**: Production WSGI server
+- **Redis**: Session storage and caching (optional)
+
+## 🧪 Testing
+
+### Running Tests
+
+```bash
+# Run all tests
+pytest
+
+# Run with coverage
+pytest --cov=app --cov-report=html
+
+# Run specific test categories
+pytest tests/test_audio_processor.py  # Audio processing tests
+pytest tests/test_auth.py             # Authentication tests
+pytest tests/ui/ --headed             # UI tests with browser
+
+# Run tests in Docker
+docker-compose -f docker-compose.test.yml up --abort-on-container-exit
+```
+
+### Test Categories
+
+- **🔧 Unit Tests**: Individual component testing
+- **🔗 Integration Tests**: API endpoint testing
+- **🎤 Audio Processing Tests**: Whisper integration testing
+- **🔐 Authentication Tests**: Security and user management
+- **🌐 UI Tests**: Browser-based interface testing
+- **🏥 Health Tests**: System monitoring and diagnostics
+
+## 🚀 Production Deployment
+
+### 🔒 Security Features
+
+- **HTTPS/TLS**: SSL termination and secure communication
+- **CSRF Protection**: Cross-site request forgery prevention
+- **XSS Protection**: Cross-site scripting mitigation
+- **Rate Limiting**: API abuse prevention
+- **Content Security Policy**: Script injection protection
+- **HSTS**: HTTP Strict Transport Security
+
+### 📊 Monitoring & Health Checks
+
+- **Health Endpoints**: `/health`, `/health/db`, `/health/system`
+- **Performance Metrics**: Response times and resource usage
+- **Error Tracking**: Comprehensive logging and error handling
+- **Database Monitoring**: Connection pool and query performance
+
+### 🔄 Maintenance
+
+```bash
+# View application logs
+docker logs dndstory-web -f
+
+# Database backup
+docker exec dndstory-db pg_dump -U dnduser dndstory > backup.sql
+
+# Update application
+docker-compose pull
+docker-compose up -d
+
+# Database migrations
+docker exec dndstory-web alembic upgrade head
+```
+
+## 🐛 Troubleshooting
+
+### Common Issues
+
+#### 🎤 Audio Processing Issues
+**Problem**: Audio files not processing correctly
+**Solutions**:
+- Ensure FFmpeg is installed and accessible
+- Check supported audio formats in configuration
+- Verify file size doesn't exceed limits
+- Check audio file integrity
+
+#### 🔐 Authentication Problems
+**Problem**: Login/registration not working
+**Solutions**:
+- Verify database connection and migrations
+- Check JWT secret key configuration
+- Ensure email validation settings
+- Review user creation permissions
+
+#### 🤖 AI Service Issues
+**Problem**: Story generation failing
+**Solutions**:
+- Verify OpenAI API key is valid and has credits
+- Check API rate limits and quotas
+- Ensure internet connectivity for API calls
+- Review error logs for specific failure reasons
+
+#### 🐳 Docker Issues
+**Problem**: Container startup problems
+**Solutions**:
+- Check environment variable configuration
+- Verify port availability (8000, 5432)
+- Ensure sufficient disk space and memory
+- Review Docker logs for specific errors
+
+### 📋 Debug Mode
+
+Enable debug mode for detailed error information:
+
+```bash
+# In .env file
+DEBUG=true
+ENVIRONMENT=development
+
+# View detailed logs
+docker-compose logs --tail=100 -f
+```
+
+## 🤝 Contributing
+
+We welcome contributions! Please see our [Contributing Guide](./docs/CONTRIBUTING.md) for details.
+
+### Development Setup
+
+1. **Fork the repository**
+2. **Create a feature branch**: `git checkout -b feature/amazing-feature`
+3. **Install development dependencies**: `pip install -r requirements.txt`
+4. **Run tests**: `pytest`
+5. **Make your changes and test thoroughly**
+6. **Commit with clear messages**: `git commit -m 'Add amazing feature'`
+7. **Push to your branch**: `git push origin feature/amazing-feature`
+8. **Create a Pull Request**
+
+### Code Standards
+
+- **Python**: Follow PEP 8 style guidelines
+- **Testing**: Maintain test coverage above 80%
+- **Documentation**: Update docs for new features
+- **Type Hints**: Use type annotations throughout
+- **Security**: Follow OWASP guidelines
+
+## 📄 License
+
+This project is licensed under the **MIT License** - see the [LICENSE](./LICENSE) file for details.
+
+## 🙏 Acknowledgments
+
+- **OpenAI** for Whisper and GPT models
+- **Atlassian** for Confluence integration
+- **FastAPI** community for excellent documentation
+- **Docker** for containerization platform
+- **PostgreSQL** team for robust database system
+
+## 📞 Support
+
+- **📖 Documentation**: Check the `/docs` folder for detailed guides
+- **🐛 Issues**: Report bugs via GitHub Issues
+- **💡 Feature Requests**: Submit via GitHub Discussions
+- **❓ Questions**: Create a discussion or issue
+
+---
+
+<div align="center">
+
+**🎲 Happy Storytelling! 🎲**
+
+*Transform your D&D sessions into legendary tales with the power of AI*
+
+</div>
