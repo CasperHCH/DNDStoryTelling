@@ -4,6 +4,8 @@ from sqlalchemy import pool
 from alembic import context
 from app.models.database import Base
 from app.config import settings
+from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
+import asyncio
 
 config = context.config
 
@@ -30,19 +32,21 @@ def run_migrations_offline():
 def run_migrations_online():
     configuration = config.get_section(config.config_ini_section)
     configuration["sqlalchemy.url"] = get_url()
-    connectable = engine_from_config(
-        configuration,
-        prefix="sqlalchemy.",
+    connectable = create_async_engine(
+        configuration["sqlalchemy.url"],
         poolclass=pool.NullPool,
     )
 
-    with connectable.connect() as connection:
-        context.configure(
-            connection=connection, target_metadata=target_metadata
-        )
+    async def do_run_migrations():
+        async with connectable.connect() as connection:
+            await connection.run_sync(
+                lambda conn: context.configure(
+                    connection=conn, target_metadata=target_metadata
+                )
+            )
+            await connection.run_sync(context.run_migrations)
 
-        with context.begin_transaction():
-            context.run_migrations()
+    asyncio.run(do_run_migrations())
 
 if context.is_offline_mode():
     run_migrations_offline()

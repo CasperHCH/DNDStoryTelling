@@ -1,5 +1,6 @@
 from pydantic_settings import BaseSettings
 from functools import lru_cache
+from pydantic import ConfigDict
 
 class Settings(BaseSettings):
     # Database settings
@@ -18,8 +19,7 @@ class Settings(BaseSettings):
     APP_NAME: str = "D&D Story Telling"
     DEBUG: bool = False
 
-    class Config:
-        env_file = ".env"
+    model_config = ConfigDict(env_file=".env")
 
 @lru_cache()
 def get_settings() -> Settings:

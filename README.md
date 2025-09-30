@@ -35,13 +35,16 @@ cp .env.example .env
 
 3. Build and run with Docker:
 ```bash
+docker build -t dnd_storytelling .
 docker-compose up -d
 ```
 
-4. Access the application:
-   - Open http://localhost:8000 in your browser
-   - Use the drag-and-drop interface to upload files
-   - Interact with the AI through the chat interface
+4. Run database migrations:
+```bash
+docker exec -it dnd_storytelling alembic upgrade head
+```
+
+5. Access the application at `http://localhost:8000`.
 
 ## Usage Guide
 
@@ -114,6 +117,29 @@ To configure the application, use the web UI to provide the following details:
 
 The application will validate and store the provided settings.
 
+## Configuration Options
+
+The application requires the following environment variables to be set in the `.env` file:
+
+- `OPENAI_API_KEY`: Your OpenAI API key for GPT-4 and Whisper.
+- `CONFLUENCE_API_TOKEN`: API token for Confluence Cloud integration.
+- `DATABASE_URL`: Connection string for the PostgreSQL database.
+- `SECRET_KEY`: Secret key for JWT authentication.
+- `FFMPEG_PATH`: Path to the FFmpeg binary for audio processing.
+
+## Installing FFmpeg
+
+FFmpeg is required for audio processing. Follow these steps to install it:
+
+1. Download FFmpeg from the [official website](https://ffmpeg.org/download.html).
+2. Extract the downloaded archive.
+3. Add the `bin` directory to your system's PATH.
+
+To verify the installation, run:
+```bash
+ffmpeg -version
+```
+
 ## Installation Guide: Running the Program as a Docker Image
 
 This guide will walk you through the steps to install and run the program as a Docker image.
@@ -132,8 +158,8 @@ This guide will walk you through the steps to install and run the program as a D
 
 1. **Clone the Repository**
    ```bash
-   git clone https://github.com/CasperHCH/Powershell.git
-   cd Powershell/DNDStoryTelling
+   git clone https://github.com/CasperHCH/DNDStoryTelling.git
+   cd DNDStoryTelling
    ```
 
 2. **Set Up Environment Variables**

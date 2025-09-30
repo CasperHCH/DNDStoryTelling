@@ -1,12 +1,14 @@
 from fastapi import FastAPI
 from app.routes import auth, story, confluence
 from app.models.database import init_db
+from contextlib import asynccontextmanager
 
-app = FastAPI(title="D&D Story Telling")
-
-@app.on_event("startup")
-async def startup():
+@asynccontextmanager
+async def lifespan(app: FastAPI):
     await init_db()
+    yield
+
+app = FastAPI(title="D&D Story Telling", lifespan=lifespan)
 
 @app.get("/")
 async def root():

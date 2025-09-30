@@ -1,10 +1,8 @@
-version: '3.8'
-
 services:
   web:
     build: .
     ports:
-      - "8000:8000"
+      - "8001:8000" # Changed host port to 8001 to avoid conflict
     environment:
       - DATABASE_URL=postgresql+asyncpg://user:password@db:5432/dndstory
       - OPENAI_API_KEY=${OPENAI_API_KEY}
@@ -39,6 +37,17 @@ services:
     command: postgres -c 'config_file=/etc/postgresql/postgresql.conf'
     ports:
       - "5432:5432"
+
+  app:
+    build:
+      context: .
+    ports:
+      - "8000:8000"
+    environment:
+      - OPENAI_API_KEY=your_openai_api_key
+      - DATABASE_URL=postgresql+asyncpg://user:password@db/test_db
+    depends_on:
+      - db
 
 volumes:
   postgres_data:

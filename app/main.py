@@ -41,3 +41,7 @@ async def handle_message(sid, data):
     # Handle chat messages and AI responses here
     response = {"text": "AI response to: " + data['text']}
     await sio.emit('response', response, room=sid)
+
+@app.get("/health")
+def health_check():
+    return {"status": "ok"}

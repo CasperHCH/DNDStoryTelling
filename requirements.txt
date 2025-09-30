@@ -17,6 +17,7 @@ openai-whisper==20231117
 pydub==0.25.1
 librosa==0.10.1
 soundfile==0.12.1
+ffmpeg-python==0.2.0
 
 # API Integration
 httpx==0.25.0
@@ -38,7 +39,3 @@ jinja2==3.1.2
 aiofiles==23.2.1
 python-socketio==5.10.0
 websockets==11.0.3
-
-# UI Testing
-pytest-playwright==0.4.3
-pytest-html==4.1.1
