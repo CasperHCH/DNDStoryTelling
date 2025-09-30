@@ -56,12 +56,13 @@ echo ""
 print_info "Checking for deprecated patterns..."
 
 # Check for deprecated docker-compose usage (should be docker compose)
-if grep -r "docker-compose" "$WORKFLOW_DIR" >/dev/null 2>&1; then
-    print_warning "Found 'docker-compose' usage (should be 'docker compose' for v2)"
+# Exclude job names and file references, focus on actual commands
+if grep -r "docker-compose " "$WORKFLOW_DIR" >/dev/null 2>&1; then
+    print_warning "Found 'docker-compose' commands (should be 'docker compose' for v2)"
     echo "Files with issues:"
-    grep -r "docker-compose" "$WORKFLOW_DIR" --include="*.yml" | head -5
+    grep -r "docker-compose " "$WORKFLOW_DIR" --include="*.yml" | head -5
 else
-    print_status 0 "No deprecated docker-compose usage found"
+    print_status 0 "No deprecated docker-compose commands found"
 fi
 
 # Check for deprecated action versions
@@ -149,7 +150,7 @@ echo ""
 print_info "Summary of fixes applied:"
 echo "========================"
 echo "✅ Fixed EOF syntax error in environment file creation"
-echo "✅ Updated docker-compose to docker compose (v2)"  
+echo "✅ Updated docker-compose to docker compose (v2)"
 echo "✅ Updated GitHub Actions to latest versions:"
 echo "   - CodeQL action: v2 → v3"
 echo "   - upload-artifact: v3 → v4"
@@ -162,7 +163,7 @@ echo ""
 print_info "Next steps:"
 echo "==========="
 echo "1. Push your changes to trigger GitHub Actions"
-echo "2. Monitor the workflow runs for success"  
+echo "2. Monitor the workflow runs for success"
 echo "3. Check the troubleshooting guide if issues persist:"
 echo "   docs/GITHUB-ACTIONS-TROUBLESHOOTING.md"
 
