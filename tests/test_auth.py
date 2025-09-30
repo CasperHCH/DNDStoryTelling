@@ -9,7 +9,7 @@ def test_register(client):
     )
     # The endpoint might return different status codes, including 404 if not implemented
     assert response.status_code in [200, 201, 404, 422]
-    
+
 def test_login(client):
     """Test user login endpoint."""
     # First try to register a user
@@ -17,10 +17,10 @@ def test_login(client):
         "/auth/register",
         json={"username": "testuser", "password": "testpass"}
     )
-    
+
     # Then try to login regardless of registration result
     response = client.post(
-        "/auth/token", 
+        "/auth/token",
         data={"username": "testuser", "password": "testpass"},
         headers={"Content-Type": "application/x-www-form-urlencoded"}
     )

@@ -7,14 +7,23 @@ on:
     branches: [ main ]
 
 jobs:
-  test:
+  ui-tests:
     runs-on: ubuntu-latest
-
+    
     services:
-      web:
-        image: ./
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: user
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: dndstory_test
         ports:
-          - 8000:8000
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
 
     steps:
     - uses: actions/checkout@v4
@@ -24,19 +33,85 @@ jobs:
       with:
         python-version: '3.11'
 
-    - name: Install dependencies
+    - name: Install FFmpeg
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y ffmpeg
+
+    - name: Install Python dependencies
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-        playwright install
+
+    - name: Install Playwright browsers
+      run: |
+        pip install playwright pytest-playwright pytest-html
+        playwright install --with-deps chromium
+
+    - name: Run database migrations
+      env:
+        DATABASE_URL: postgresql+asyncpg://user:password@localhost:5432/dndstory_test
+        SECRET_KEY: test_secret_key
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        CONFLUENCE_API_TOKEN: ${{ secrets.CONFLUENCE_API_TOKEN }}
+        CONFLUENCE_URL: ${{ secrets.CONFLUENCE_URL }}
+      run: |
+        # Create tables if migrations exist
+        if [ -f "alembic.ini" ]; then
+          alembic upgrade head || echo "No migrations to run"
+        fi
+
+    - name: Start the application
+      env:
+        DATABASE_URL: postgresql+asyncpg://user:password@localhost:5432/dndstory_test
+        SECRET_KEY: test_secret_key
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        CONFLUENCE_API_TOKEN: ${{ secrets.CONFLUENCE_API_TOKEN }}
+        CONFLUENCE_URL: ${{ secrets.CONFLUENCE_URL }}
+        PYTHONPATH: .
+      run: |
+        # Start the FastAPI server in the background
+        uvicorn app.main:app --host 0.0.0.0 --port 8000 &
+        
+        # Wait for the server to start
+        timeout=30
+        while ! curl -s http://localhost:8000 > /dev/null; do
+          sleep 1
+          timeout=$((timeout - 1))
+          if [ $timeout -le 0 ]; then
+            echo "Server failed to start within 30 seconds"
+            # Show server logs for debugging
+            jobs
+            exit 1
+          fi
+        done
+        
+        echo "Server is running and responding"
 
     - name: Run UI tests
+      env:
+        DATABASE_URL: postgresql+asyncpg://user:password@localhost:5432/dndstory_test
+        SECRET_KEY: test_secret_key
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        CONFLUENCE_API_TOKEN: ${{ secrets.CONFLUENCE_API_TOKEN }}
+        CONFLUENCE_URL: ${{ secrets.CONFLUENCE_URL }}
       run: |
-        pytest tests/ui/ -v --html=report.html
+        pytest tests/ui/ -v --html=ui-test-report.html --self-contained-html
 
-    - name: Upload test report
+    - name: Upload UI test artifacts
       if: always()
       uses: actions/upload-artifact@v4
       with:
-        name: test-report
-        path: report.html
+        name: ui-test-results
+        path: |
+          ui-test-report.html
+          test-results/
+        retention-days: 30
+
+    - name: Upload Playwright screenshots
+      if: failure()
+      uses: actions/upload-artifact@v4
+      with:
+        name: playwright-screenshots
+        path: test-results/
+        retention-days: 30

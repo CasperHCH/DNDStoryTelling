@@ -30,17 +30,17 @@ def app():
 async def test_engine():
     """Create test database engine."""
     engine = create_async_engine(TEST_DATABASE_URL, echo=False)
-    
+
     # Create all tables
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
-    
+
     yield engine
-    
+
     # Clean up
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
-    
+
     await engine.dispose()
 
 @pytest.fixture(scope="session")
@@ -73,7 +73,7 @@ def audio_file():
         tmp.write(wav_header)
         tmp.flush()
         yield tmp.name
-    
+
     # Clean up
     try:
         os.unlink(tmp.name)

@@ -8,7 +8,7 @@ async def test_process_audio(audio_file):
     """Test that audio processor can handle audio files."""
     if not os.path.exists(audio_file):
         pytest.skip("Audio file not created properly")
-    
+
     try:
         processor = AudioProcessor()
         result = await processor.process_audio(audio_file)
