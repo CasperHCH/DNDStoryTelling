@@ -64,7 +64,7 @@ Supports all major audio formats:
    ```bash
    # Production deployment
    docker-compose -f docker-compose.prod.yml up -d
-   
+
    # Or development environment
    docker-compose up -d
    ```
@@ -103,7 +103,7 @@ Supports all major audio formats:
 
 For deployment on Synology, QNAP, or other NAS systems, see our comprehensive guides:
 - 📋 [Quick Deployment Checklist](./DEPLOYMENT-CHECKLIST.md)
-- 🔧 [NAS Deployment Guide](./NAS-DEPLOYMENT.md)  
+- 🔧 [NAS Deployment Guide](./NAS-DEPLOYMENT.md)
 - 🚀 [Production Deployment](./DEPLOYMENT.md)
 - 🛠️ [GitHub Actions Troubleshooting](./docs/GITHUB-ACTIONS-TROUBLESHOOTING.md)
 
@@ -448,7 +448,7 @@ This project is licensed under the **MIT License** - see the [LICENSE](./LICENSE
 ### 🆘 Getting Help
 
 - **🐛 Issues**: Report bugs via GitHub Issues
-- **💡 Feature Requests**: Submit via GitHub Discussions  
+- **💡 Feature Requests**: Submit via GitHub Discussions
 - **❓ Questions**: Create a discussion or issue
 
 ---

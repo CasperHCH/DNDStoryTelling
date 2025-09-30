@@ -7,13 +7,9 @@ RUN apt-get update && apt-get install -y \
     gcc \
     ffmpeg \
     libpq-dev \
+    netcat-openbsd \
+    curl \
     && rm -rf /var/lib/apt/lists/*
-
-# Install FFmpeg for audio processing
-RUN apt-get update && apt-get install -y ffmpeg && rm -rf /var/lib/apt/lists/*
-
-# Install netcat-openbsd for the wait-for-it.sh script
-RUN apt-get update && apt-get install -y netcat-openbsd && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements and install Python packages
 COPY requirements.txt .
@@ -45,12 +41,12 @@ ARG DATABASE_URL=postgresql+asyncpg://user:password@localhost/test_db
 ENV OPENAI_API_KEY=$OPENAI_API_KEY
 ENV DATABASE_URL=$DATABASE_URL
 
-# Verify environment variables
-RUN python -c "import os; assert 'OPENAI_API_KEY' in os.environ, 'Missing OPENAI_API_KEY'; assert 'DATABASE_URL' in os.environ, 'Missing DATABASE_URL'"
+# Expose port
+EXPOSE 8000
 
-# Add a script to wait for the database to be ready before running migrations
-COPY wait-for-it.sh /usr/local/bin/wait-for-it
-RUN chmod +x /usr/local/bin/wait-for-it
+# Add health check
+HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:8000/health || exit 1
 
-# Update the command to wait for the database before running Alembic migrations
-CMD ["/usr/local/bin/wait-for-it", "db:5432", "--", "alembic", "upgrade", "head"]
+# Start the application
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]

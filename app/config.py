@@ -6,6 +6,26 @@ from functools import lru_cache
 from pydantic import Field, field_validator, ConfigDict
 from pydantic_settings import BaseSettings
 
+
+def _get_env_files() -> List[str]:
+    """Get list of environment files, filtering out None values."""
+    env_files = []
+
+    environment = os.getenv("ENVIRONMENT", "").lower()
+    is_test = environment in ("test", "testing")
+
+    # Add test-specific env files if they exist
+    if is_test and os.path.exists(".env.docker.test"):
+        env_files.append(".env.docker.test")
+    if is_test and os.path.exists(".env.test.minimal"):
+        env_files.append(".env.test.minimal")
+
+    # Always try to load .env if it exists
+    if os.path.exists(".env"):
+        env_files.append(".env")
+
+    return env_files
+
 class Settings(BaseSettings):
     """Application settings with validation and type safety."""
 
@@ -54,11 +74,7 @@ class Settings(BaseSettings):
     DB_POOL_RECYCLE: int = Field(default=3600)  # 1 hour
 
     model_config = ConfigDict(
-        env_file=[
-            ".env.docker.test" if os.getenv("ENVIRONMENT", "").lower() in ("test", "testing") and os.path.exists(".env.docker.test") else None,
-            ".env.test.minimal" if os.getenv("ENVIRONMENT", "").lower() in ("test", "testing") else None,
-            ".env"
-        ],
+        env_file=_get_env_files(),
         env_file_encoding="utf-8",
         case_sensitive=True,
         validate_assignment=True
