@@ -1,0 +1,77 @@
+# Coverage.py configuration file
+# Fixes GitHub Actions coverage comment issues with absolute paths
+
+[run]
+# Enable relative file paths instead of absolute paths
+relative_files = true
+
+# Source directory for coverage analysis
+source = app/
+
+# Parallel processing support for faster coverage
+parallel = true
+
+# Include patterns
+include = app/*
+
+# Exclude patterns
+omit =
+    app/__pycache__/*
+    app/*/migrations/*
+    app/tests/*
+    */venv/*
+    */virtualenv/*
+    */.venv/*
+    */test*
+    setup.py
+    conftest.py
+
+[report]
+# Show missing lines in coverage report
+show_missing = true
+
+# Skip covered files to reduce noise
+skip_covered = false
+
+# Skip empty files
+skip_empty = true
+
+# Precision for coverage percentage
+precision = 2
+
+# Sort by name for consistent output
+sort = Name
+
+# Exclude patterns for reporting
+exclude_lines =
+    pragma: no cover
+    def __repr__
+    if self.debug:
+    if settings.DEBUG
+    raise AssertionError
+    raise NotImplementedError
+    if 0:
+    if __name__ == .__main__.:
+    class .*\bProtocol\):
+    @(abc\.)?abstractmethod
+
+[html]
+# HTML output directory
+directory = htmlcov
+
+# Show contexts (which tests covered which lines)
+show_contexts = true
+
+# Skip files with no statements
+skip_empty = true
+
+[xml]
+# XML output file
+output = coverage.xml
+
+[json]
+# JSON output file
+output = coverage.json
+
+# Show contexts in JSON output
+show_contexts = true
