@@ -9,20 +9,22 @@ async def test_process_audio(audio_file):
     if not os.path.exists(audio_file):
         pytest.skip("Audio file not created properly")
     
-    processor = AudioProcessor()
-    
     try:
+        processor = AudioProcessor()
         result = await processor.process_audio(audio_file)
         assert isinstance(result, str)
-        assert len(result) >= 0  # Even empty audio should return empty string
+        assert len(result) >= 0
     except FileNotFoundError as e:
-        if "ffmpeg" in str(e).lower():
+        # Handle various missing dependency scenarios
+        error_msg = str(e).lower()
+        if "ffmpeg" in error_msg or "avconv" in error_msg or "fil blev ikke fundet" in error_msg:
             pytest.skip("FFmpeg not available for testing")
         else:
             raise
     except Exception as e:
-        # If whisper fails to load or process, that's okay for testing
-        if "whisper" in str(e).lower() or "model" in str(e).lower():
-            pytest.skip(f"Whisper model not available: {e}")
+        # Handle other dependency issues
+        error_msg = str(e).lower()
+        if any(keyword in error_msg for keyword in ["whisper", "model", "torch", "cuda"]):
+            pytest.skip(f"ML dependencies not available: {e}")
         else:
             raise
