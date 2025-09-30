@@ -27,7 +27,7 @@ def ensure_server_running():
     """Ensure the server is running before UI tests start."""
     base_url = "http://localhost:8000"
     max_attempts = 30
-    
+
     for attempt in range(max_attempts):
         try:
             response = requests.get(f"{base_url}/", timeout=2)

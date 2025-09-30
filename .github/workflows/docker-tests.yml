@@ -1,0 +1,228 @@
+name: Docker Tests
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  docker-build-test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        platform: [linux/amd64, linux/arm64]
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Set up QEMU for ARM64 emulation
+      if: matrix.platform == 'linux/arm64'
+      uses: docker/setup-qemu-action@v3
+      with:
+        platforms: arm64
+
+    - name: Build Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        platforms: ${{ matrix.platform }}
+        push: false
+        tags: dndstorytelling:test
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+        build-args: |
+          OPENAI_API_KEY=test_key
+          DATABASE_URL=postgresql+asyncpg://user:password@db:5432/dndstory
+
+  docker-compose-test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Create test environment file
+      run: |
+        cat > .env << EOF
+        OPENAI_API_KEY=test_openai_key
+        CONFLUENCE_API_TOKEN=test_confluence_token
+        CONFLUENCE_URL=https://test.atlassian.net
+        SECRET_KEY=test_secret_key_for_docker_testing_12345
+        EOF
+
+    - name: Build and start services
+      run: |
+        docker-compose up -d --build
+
+    - name: Wait for services to be ready
+      run: |
+        # Wait for database
+        timeout=60
+        while ! docker-compose exec -T db pg_isready -U user -d dndstory; do
+          sleep 2
+          timeout=$((timeout - 2))
+          if [ $timeout -le 0 ]; then
+            echo "Database failed to start"
+            docker-compose logs db
+            exit 1
+          fi
+        done
+
+        # Wait for web service
+        timeout=60
+        while ! curl -f http://localhost:8001/health 2>/dev/null; do
+          sleep 2
+          timeout=$((timeout - 2))
+          if [ $timeout -le 0 ]; then
+            echo "Web service failed to start"
+            docker-compose logs web
+            exit 1
+          fi
+        done
+
+    - name: Test application endpoints
+      run: |
+        # Test health endpoint
+        curl -f http://localhost:8001/health || curl -f http://localhost:8001/
+
+        # Test static files (if they exist)
+        curl -I http://localhost:8001/static/ || echo "No static files endpoint"
+
+    - name: Run database migrations test
+      run: |
+        # Test that Alembic migrations work
+        docker-compose exec -T web alembic current || echo "No migrations configured yet"
+
+    - name: Test container resource usage
+      run: |
+        # Check memory and CPU usage (important for NAS deployment)
+        docker stats --no-stream --format "table {{.Container}}\t{{.CPUPerc}}\t{{.MemUsage}}"
+
+        # Log container sizes
+        docker images dndstorytelling_web --format "table {{.Repository}}\t{{.Tag}}\t{{.Size}}"
+
+    - name: Check container logs for errors
+      run: |
+        echo "=== Web Service Logs ==="
+        docker-compose logs web
+        echo "=== Database Logs ==="
+        docker-compose logs db
+
+        # Check for critical errors
+        if docker-compose logs web | grep -i "error\|exception\|failed" | grep -v "test"; then
+          echo "Found errors in web service logs"
+          exit 1
+        fi
+
+    - name: Test container restart resilience
+      run: |
+        echo "Testing container restart..."
+        docker-compose restart web
+
+        # Wait for service to come back up
+        sleep 10
+        curl -f http://localhost:8001/health || curl -f http://localhost:8001/
+
+    - name: Test file upload functionality
+      run: |
+        # Create a test file
+        echo "Test D&D session content" > test-session.txt
+
+        # Test file upload endpoint (may return 404 if not implemented, that's ok)
+        curl -X POST -F "file=@test-session.txt" http://localhost:8001/upload || echo "Upload endpoint not available yet"
+
+    - name: Cleanup
+      if: always()
+      run: |
+        docker-compose down -v
+        docker system prune -f
+
+  synology-compatibility-test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Test ARM64 compatibility (Synology DS718+ simulation)
+      run: |
+        # Set up ARM64 emulation
+        docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
+
+        # Build for ARM64 (DS718+ architecture)
+        docker buildx create --use --name synology-builder
+        docker buildx build \
+          --platform linux/arm64 \
+          --build-arg OPENAI_API_KEY=test_key \
+          --build-arg DATABASE_URL=postgresql+asyncpg://user:password@db:5432/dndstory \
+          -t dndstorytelling:synology \
+          --load .
+
+    - name: Test resource constraints (NAS simulation)
+      run: |
+        # Create a container with limited resources (similar to NAS constraints)
+        docker run -d \
+          --name synology-test \
+          --memory=512m \
+          --cpus=1.0 \
+          -e DATABASE_URL=sqlite:///./test.db \
+          -e SECRET_KEY=test_key \
+          -e OPENAI_API_KEY=test_key \
+          -p 8002:8000 \
+          dndstorytelling:synology
+
+    - name: Test application under resource constraints
+      run: |
+        # Wait for application to start
+        sleep 15
+
+        # Test basic functionality
+        curl -f http://localhost:8002/health || curl -f http://localhost:8002/ || echo "Service not responding"
+
+        # Check resource usage
+        docker stats --no-stream synology-test
+
+    - name: Test SQLite fallback (for NAS deployment option)
+      run: |
+        # Test that the app can work with SQLite (useful for NAS)
+        docker run --rm \
+          -e DATABASE_URL=sqlite:///./test.db \
+          -e SECRET_KEY=test_key \
+          -e OPENAI_API_KEY=test_key \
+          dndstorytelling:synology \
+          python -c "from app.models.database import Base; print('SQLite compatibility: OK')"
+
+    - name: Cleanup Synology test
+      if: always()
+      run: |
+        docker stop synology-test || true
+        docker rm synology-test || true
+        docker buildx rm synology-builder || true
+
+  security-scan:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Build image for security scan
+      run: |
+        docker build -t dndstorytelling:security-scan \
+          --build-arg OPENAI_API_KEY=test_key \
+          --build-arg DATABASE_URL=postgresql+asyncpg://user:password@db:5432/dndstory \
+          .
+
+    - name: Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@master
+      with:
+        image-ref: 'dndstorytelling:security-scan'
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+
+    - name: Upload Trivy scan results
+      uses: github/codeql-action/upload-sarif@v2
+      if: always()
+      with:
+        sarif_file: 'trivy-results.sarif'

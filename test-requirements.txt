@@ -1,0 +1,14 @@
+# Testing Dependencies
+pytest==7.4.3
+pytest-asyncio==0.21.1
+pytest-cov==4.1.0
+pytest-mock==3.11.1
+
+# Database drivers for testing
+psycopg2-binary==2.9.7  # For synchronous PostgreSQL operations in tests
+aiosqlite==0.19.0       # For SQLite fallback in tests
+
+# Test utilities
+httpx==0.25.0           # For async HTTP client testing
+factory-boy==3.3.0      # For test data generation
+freezegun==1.2.2        # For time-based testing

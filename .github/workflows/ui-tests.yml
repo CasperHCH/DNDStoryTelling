@@ -9,7 +9,7 @@ on:
 jobs:
   ui-tests:
     runs-on: ubuntu-latest
-    
+
     services:
       postgres:
         image: postgres:15
@@ -42,6 +42,7 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
+        pip install -r test-requirements.txt
 
     - name: Install Playwright browsers
       run: |
@@ -72,7 +73,7 @@ jobs:
       run: |
         # Start the FastAPI server in the background
         uvicorn app.main:app --host 0.0.0.0 --port 8000 &
-        
+
         # Wait for the server to start
         timeout=30
         while ! curl -s http://localhost:8000 > /dev/null; do
@@ -85,7 +86,7 @@ jobs:
             exit 1
           fi
         done
-        
+
         echo "Server is running and responding"
 
     - name: Run UI tests

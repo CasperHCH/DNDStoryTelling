@@ -9,9 +9,10 @@ from fastapi.testclient import TestClient
 import tempfile
 from pathlib import Path
 
-# Test database URL - use the one from environment or fallback to PostgreSQL test URL
-TEST_DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://user:password@localhost:5432/dndstory_test")
-TEST_DATABASE_URL_SYNC = TEST_DATABASE_URL.replace("+asyncpg", "") if "+asyncpg" in TEST_DATABASE_URL else TEST_DATABASE_URL
+# Test database URL - use the one from environment or fallback to async PostgreSQL test URL
+TEST_DATABASE_URL = os.getenv("DATABASE_URL", "postgresql+asyncpg://user:password@localhost:5432/dndstory_test")
+# For sync operations, convert asyncpg to psycopg2 URL
+TEST_DATABASE_URL_SYNC = TEST_DATABASE_URL.replace("postgresql+asyncpg://", "postgresql://") if "+asyncpg" in TEST_DATABASE_URL else TEST_DATABASE_URL
 
 @pytest.fixture(scope="session")
 def event_loop():

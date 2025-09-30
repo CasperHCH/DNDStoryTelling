@@ -1,0 +1,158 @@
+# Docker Compose configuration optimized for Synology NAS DS718+
+# This file is specifically designed for ARM64 architecture and limited resources
+
+version: '3.8'
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - OPENAI_API_KEY=${OPENAI_API_KEY}
+        - DATABASE_URL=postgresql+asyncpg://user:password@db:5432/dndstory
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://user:password@db:5432/dndstory
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - CONFLUENCE_API_TOKEN=${CONFLUENCE_API_TOKEN}
+      - CONFLUENCE_URL=${CONFLUENCE_URL}
+      - SECRET_KEY=${SECRET_KEY}
+      - PYTHONPATH=/app
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      # Persistent storage for uploaded files
+      - dnd_uploads:/app/uploads
+      # Configuration persistence
+      - dnd_config:/app/config
+    restart: unless-stopped
+    # Resource limits for NAS environment
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '1.0'
+        reservations:
+          memory: 512M
+          cpus: '0.5'
+    # Health check
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  db:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-secure_password_change_me}
+      - POSTGRES_DB=dndstory
+      - POSTGRES_INITDB_ARGS=--encoding=UTF-8 --lc-collate=C --lc-ctype=C
+    volumes:
+      # Persistent database storage
+      - dnd_postgres_data:/var/lib/postgresql/data
+      # Custom PostgreSQL configuration for NAS
+      - ./postgres/synology-postgresql.conf:/etc/postgresql/postgresql.conf:ro
+    restart: unless-stopped
+    # Resource limits for NAS environment
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+        reservations:
+          memory: 256M
+          cpus: '0.25'
+    # Health check
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d dndstory"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    # Security
+    security_opt:
+      - no-new-privileges:true
+    # Logging
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Optional: Redis for caching (lightweight for NAS)
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    volumes:
+      - dnd_redis_data:/data
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+          cpus: '0.25'
+    # Security
+    security_opt:
+      - no-new-privileges:true
+    # Health check
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Optional: Watchtower for automatic updates
+  watchtower:
+    image: containrrr/watchtower:arm64v8-latest
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - WATCHTOWER_CLEANUP=true
+      - WATCHTOWER_POLL_INTERVAL=86400  # Check daily
+      - WATCHTOWER_INCLUDE_STOPPED=true
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 64M
+          cpus: '0.1'
+
+volumes:
+  dnd_postgres_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      # Update this path to your Synology volume
+      device: /volume1/docker/dndstorytelling/postgres
+
+  dnd_uploads:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      # Update this path to your Synology volume
+      device: /volume1/docker/dndstorytelling/uploads
+
+  dnd_config:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      # Update this path to your Synology volume
+      device: /volume1/docker/dndstorytelling/config
+
+  dnd_redis_data:
+    driver: local
+
+networks:
+  default:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16

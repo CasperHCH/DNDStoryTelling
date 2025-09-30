@@ -25,20 +25,20 @@ check_server() {
 wait_for_server() {
     local timeout=30
     local count=0
-    
+
     echo "Waiting for server to start..."
-    
+
     while ! check_server; do
         if [ $count -ge $timeout ]; then
             echo "ERROR: Server failed to start within $timeout seconds"
             return 1
         fi
-        
+
         sleep 1
         count=$((count + 1))
         echo -n "."
     done
-    
+
     echo ""
     echo "Server is running and responding!"
     return 0
