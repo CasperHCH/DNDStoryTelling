@@ -103,8 +103,9 @@ Supports all major audio formats:
 
 For deployment on Synology, QNAP, or other NAS systems, see our comprehensive guides:
 - 📋 [Quick Deployment Checklist](./DEPLOYMENT-CHECKLIST.md)
-- 🔧 [NAS Deployment Guide](./NAS-DEPLOYMENT.md)
+- 🔧 [NAS Deployment Guide](./NAS-DEPLOYMENT.md)  
 - 🚀 [Production Deployment](./DEPLOYMENT.md)
+- 🛠️ [GitHub Actions Troubleshooting](./docs/GITHUB-ACTIONS-TROUBLESHOOTING.md)
 
 ## ⚙️ Configuration
 
@@ -341,6 +342,8 @@ docker exec dndstory-web alembic upgrade head
 
 ## 🐛 Troubleshooting
 
+For GitHub Actions workflow issues, see the [GitHub Actions Fixes Summary](./GITHUB-ACTIONS-FIXES-SUMMARY.md).
+
 ### Common Issues
 
 #### 🎤 Audio Processing Issues
@@ -425,9 +428,27 @@ This project is licensed under the **MIT License** - see the [LICENSE](./LICENSE
 
 ## 📞 Support
 
-- **📖 Documentation**: Check the `/docs` folder for detailed guides
+### 📖 Documentation
+
+| Document | Description |
+|----------|-------------|
+| [Contributing Guide](./docs/CONTRIBUTING.md) | Development setup and contribution guidelines |
+| [UI Documentation](./docs/UI.md) | Interface components and design system |
+| [GitHub Actions Troubleshooting](./docs/GITHUB-ACTIONS-TROUBLESHOOTING.md) | CI/CD workflow issues and solutions |
+| [GitHub Actions Fixes](./GITHUB-ACTIONS-FIXES-SUMMARY.md) | Complete summary of all workflow fixes |
+
+### 🚀 Deployment Guides
+
+| Guide | Use Case |
+|-------|----------|
+| [Production Deployment](./DEPLOYMENT.md) | Complete production setup guide |
+| [Deployment Checklist](./DEPLOYMENT-CHECKLIST.md) | Step-by-step deployment verification |
+| [NAS Deployment](./NAS-DEPLOYMENT.md) | Synology, QNAP, TrueNAS setup |
+
+### 🆘 Getting Help
+
 - **🐛 Issues**: Report bugs via GitHub Issues
-- **💡 Feature Requests**: Submit via GitHub Discussions
+- **💡 Feature Requests**: Submit via GitHub Discussions  
 - **❓ Questions**: Create a discussion or issue
 
 ---

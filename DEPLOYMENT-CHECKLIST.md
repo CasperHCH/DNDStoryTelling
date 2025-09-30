@@ -10,7 +10,7 @@ This comprehensive checklist ensures your D&D Story Telling deployment is produc
 
 - [ ] **Server Resources Verified** ✅
   - [ ] CPU: Minimum 2 cores, Recommended 4+ cores
-  - [ ] Memory: Minimum 4GB RAM, Recommended 8GB+ RAM  
+  - [ ] Memory: Minimum 4GB RAM, Recommended 8GB+ RAM
   - [ ] Storage: Minimum 20GB, Recommended 50GB+ available
   - [ ] Network: Stable internet connection with adequate bandwidth
 
@@ -59,7 +59,7 @@ This comprehensive checklist ensures your D&D Story Telling deployment is produc
   ```bash
   /opt/dndstory/
   ├── uploads/          # User file uploads
-  ├── logs/            # Application logs  
+  ├── logs/            # Application logs
   ├── temp/            # Temporary processing files
   ├── backups/         # Database backups
   ├── ssl/             # SSL certificates
@@ -94,10 +94,10 @@ This comprehensive checklist ensures your D&D Story Telling deployment is produc
   ```bash
   # Start services
   docker-compose -f docker-compose.prod.yml up -d
-  
+
   # Verify all containers running
   docker-compose -f docker-compose.prod.yml ps
-  
+
   # Check container health
   docker-compose -f docker-compose.prod.yml exec app curl -f http://localhost:8000/health
   ```
@@ -120,10 +120,10 @@ This comprehensive checklist ensures your D&D Story Telling deployment is produc
   ```bash
   # Check pod status
   kubectl get pods -n dndstory
-  
+
   # Verify readiness probes
   kubectl describe pods -n dndstory
-  
+
   # Test service connectivity
   kubectl port-forward -n dndstory svc/dndstory-service 8080:80
   ```
@@ -176,10 +176,10 @@ This comprehensive checklist ensures your D&D Story Telling deployment is produc
   ```bash
   # Run Alembic migrations
   docker exec dndstory-app alembic upgrade head
-  
+
   # Verify tables created
   docker exec dndstory-db psql -U dnduser -d dndstory -c "\dt"
-  
+
   # Check migration history
   docker exec dndstory-app alembic current
   ```
@@ -196,12 +196,12 @@ This comprehensive checklist ensures your D&D Story Telling deployment is produc
   ```sql
   -- Test basic connectivity
   SELECT version();
-  
+
   -- Verify user permissions
   SELECT current_user, current_database();
-  
+
   -- Check table structure
-  SELECT table_name FROM information_schema.tables 
+  SELECT table_name FROM information_schema.tables
   WHERE table_schema = 'public';
   ```
 
@@ -265,10 +265,10 @@ This comprehensive checklist ensures your D&D Story Telling deployment is produc
   ```bash
   # Test SSL configuration
   curl -I https://your-domain.com
-  
+
   # Verify certificate chain
   openssl s_client -connect your-domain.com:443 -servername your-domain.com
-  
+
   # Check SSL Labs rating
   # Visit: https://www.ssllabs.com/ssltest/analyze.html?d=your-domain.com
   ```
@@ -335,7 +335,7 @@ This comprehensive checklist ensures your D&D Story Telling deployment is produc
 
 - [ ] **Grafana Dashboards** ✅
   - [ ] Application performance dashboard
-  - [ ] Infrastructure monitoring dashboard  
+  - [ ] Infrastructure monitoring dashboard
   - [ ] Database performance dashboard
   - [ ] User activity and engagement metrics
 
@@ -359,10 +359,10 @@ This comprehensive checklist ensures your D&D Story Telling deployment is produc
   ```bash
   # Test backup creation
   ./backup-production.sh
-  
+
   # Verify backup integrity
   gunzip -t /backups/latest/database.sql.gz
-  
+
   # Test backup restoration (on test environment)
   ./disaster-recovery.sh backup_name_test
   ```
@@ -501,7 +501,7 @@ This comprehensive checklist ensures your D&D Story Telling deployment is produc
 
 **Technical Lead Sign-off:**
 - [ ] All technical requirements verified ✅
-- [ ] Performance benchmarks met ✅  
+- [ ] Performance benchmarks met ✅
 - [ ] Security requirements satisfied ✅
 - [ ] Backup and recovery tested ✅
 
@@ -531,9 +531,9 @@ This comprehensive checklist ensures your D&D Story Telling deployment is produc
 
 *Your D&D Story Telling application is production-ready and fully operational.*
 
-**Deployment Date:** `______________`  
-**Deployed By:** `______________`  
-**Environment:** `______________`  
+**Deployment Date:** `______________`
+**Deployed By:** `______________`
+**Environment:** `______________`
 **Version:** `production-v1.0.0`
 
 [📊 View Monitoring Dashboard](https://monitoring.yourdomain.com) | [📚 Access Documentation](./DEPLOYMENT.md) | [🚨 Emergency Procedures](./docs/EMERGENCY_PROCEDURES.md)

@@ -245,15 +245,15 @@ chmod 777 /volume1/docker/dndstory/{uploads,temp}
 if [ ! -f .env ]; then
     echo "🔐 Generating secure configuration..."
     cp .env.example .env
-    
+
     # Generate random passwords
     SECRET_KEY=$(openssl rand -hex 32)
     DB_PASSWORD=$(openssl rand -base64 32 | tr -d "=+/" | cut -c1-25)
-    
+
     # Update .env with generated values
     sed -i "s/your-super-secure-secret-key-minimum-32-chars-long-for-production-use/$SECRET_KEY/" .env
     sed -i "s/your-secure-database-password-here/$DB_PASSWORD/g" .env
-    
+
     echo "🔑 Passwords generated and saved to .env"
     echo "❗ Please update API keys and domain settings in .env"
 fi
@@ -426,7 +426,7 @@ spec:
 server {
     listen 80;
     server_name storytelling.yournas.com;
-    
+
     # Redirect HTTP to HTTPS
     return 301 https://$server_name$request_uri;
 }
@@ -434,23 +434,23 @@ server {
 server {
     listen 443 ssl http2;
     server_name storytelling.yournas.com;
-    
+
     # SSL Configuration
     ssl_certificate /path/to/ssl/certificate.crt;
     ssl_certificate_key /path/to/ssl/private.key;
     ssl_protocols TLSv1.2 TLSv1.3;
     ssl_ciphers HIGH:!aNULL:!MD5;
-    
+
     # Security Headers
     add_header X-Frame-Options "SAMEORIGIN" always;
     add_header X-Content-Type-Options "nosniff" always;
     add_header X-XSS-Protection "1; mode=block" always;
     add_header Referrer-Policy "strict-origin-when-cross-origin" always;
     add_header Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline';" always;
-    
+
     # File Upload Size
     client_max_body_size 50M;
-    
+
     # Proxy Settings
     location / {
         proxy_pass http://localhost:8000;
@@ -458,25 +458,25 @@ server {
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
-        
+
         # WebSocket Support
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection "upgrade";
-        
+
         # Timeouts
         proxy_connect_timeout 60s;
         proxy_send_timeout 60s;
         proxy_read_timeout 60s;
     }
-    
+
     # Static files
     location /static/ {
         proxy_pass http://localhost:8000/static/;
         expires 1y;
         add_header Cache-Control "public, immutable";
     }
-    
+
     # Health check
     location /health {
         proxy_pass http://localhost:8000/health;
@@ -498,13 +498,13 @@ http:
       middlewares:
         - security-headers
         - rate-limit
-  
+
   services:
     dndstory-service:
       loadBalancer:
         servers:
           - url: "http://dndstory-app:8000"
-  
+
   middlewares:
     security-headers:
       headers:
@@ -512,7 +512,7 @@ http:
         contentTypeNosniff: true
         browserXssFilter: true
         referrerPolicy: "strict-origin-when-cross-origin"
-        
+
     rate-limit:
       rateLimit:
         burst: 100
