@@ -3,103 +3,133 @@
 import os
 from typing import List, Optional
 from functools import lru_cache
-from pydantic import BaseSettings, Field, validator
-from pydantic import ConfigDict
+from pydantic import Field, field_validator, ConfigDict
+from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
     """Application settings with validation and type safety."""
-    
+
     # Environment
-    ENVIRONMENT: str = Field(default="development", env="ENVIRONMENT")
-    DEBUG: bool = Field(default=False, env="DEBUG")
-    
+    ENVIRONMENT: str = Field(default="development")
+    DEBUG: bool = Field(default=False)
+
     # Database settings
-    DATABASE_URL: str = Field(..., env="DATABASE_URL")
-    
+    DATABASE_URL: str = Field(...)
+
     # Security settings
-    SECRET_KEY: str = Field(..., env="SECRET_KEY", min_length=32)
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = Field(default=30, env="ACCESS_TOKEN_EXPIRE_MINUTES")
-    
-    # CORS settings
-    ALLOWED_HOSTS: List[str] = Field(default=["*"], env="ALLOWED_HOSTS")
-    CORS_ORIGINS: List[str] = Field(default=["*"], env="CORS_ORIGINS")
-    
+    SECRET_KEY: str = Field(..., min_length=32)
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = Field(default=30)
+
+    # CORS settings (stored as comma-separated strings, parsed to lists)
+    ALLOWED_HOSTS: str = Field(default="*")
+    CORS_ORIGINS: str = Field(default="*")
+
     # API Keys
-    OPENAI_API_KEY: Optional[str] = Field(default=None, env="OPENAI_API_KEY")
-    CONFLUENCE_API_TOKEN: Optional[str] = Field(default=None, env="CONFLUENCE_API_TOKEN")
-    CONFLUENCE_URL: Optional[str] = Field(default=None, env="CONFLUENCE_URL")
-    CONFLUENCE_PARENT_PAGE_ID: Optional[str] = Field(default=None, env="CONFLUENCE_PARENT_PAGE_ID")
-    
+    OPENAI_API_KEY: Optional[str] = Field(default=None)
+    CONFLUENCE_API_TOKEN: Optional[str] = Field(default=None)
+    CONFLUENCE_URL: Optional[str] = Field(default=None)
+    CONFLUENCE_PARENT_PAGE_ID: Optional[str] = Field(default=None)
+
     # Application settings
-    APP_NAME: str = Field(default="D&D Story Telling", env="APP_NAME")
-    VERSION: str = Field(default="1.0.0", env="VERSION")
-    
+    APP_NAME: str = Field(default="D&D Story Telling")
+    VERSION: str = Field(default="1.0.0")
+
     # File upload settings
-    MAX_FILE_SIZE: int = Field(default=50 * 1024 * 1024, env="MAX_FILE_SIZE")  # 50MB
-    UPLOAD_DIR: str = Field(default="uploads", env="UPLOAD_DIR")
-    
-    # Audio processing settings
-    SUPPORTED_AUDIO_FORMATS: List[str] = Field(
-        default=["mp3", "wav", "m4a", "ogg", "flac"],
-        env="SUPPORTED_AUDIO_FORMATS"
+    MAX_FILE_SIZE: int = Field(default=50 * 1024 * 1024)  # 50MB
+    UPLOAD_DIR: str = Field(default="uploads")
+
+    # Audio processing settings (stored as comma-separated string, parsed to list)
+    SUPPORTED_AUDIO_FORMATS: str = Field(
+        default="mp3,wav,m4a,ogg,flac"
     )
-    
+
     # Rate limiting
-    RATE_LIMIT_REQUESTS: int = Field(default=100, env="RATE_LIMIT_REQUESTS")
-    RATE_LIMIT_WINDOW: int = Field(default=3600, env="RATE_LIMIT_WINDOW")  # 1 hour
-    
+    RATE_LIMIT_REQUESTS: int = Field(default=100)
+    RATE_LIMIT_WINDOW: int = Field(default=3600)  # 1 hour
+
+    # Database connection pooling
+    DB_POOL_SIZE: int = Field(default=5)
+    DB_MAX_OVERFLOW: int = Field(default=10)
+    DB_POOL_TIMEOUT: int = Field(default=30)
+    DB_POOL_RECYCLE: int = Field(default=3600)  # 1 hour
+
     model_config = ConfigDict(
-        env_file=".env",
+        env_file=[
+            ".env.docker.test" if os.getenv("ENVIRONMENT", "").lower() in ("test", "testing") and os.path.exists(".env.docker.test") else None,
+            ".env.test.minimal" if os.getenv("ENVIRONMENT", "").lower() in ("test", "testing") else None,
+            ".env"
+        ],
         env_file_encoding="utf-8",
         case_sensitive=True,
         validate_assignment=True
     )
-    
-    @validator("DATABASE_URL")
+
+    @field_validator("DATABASE_URL")
+    @classmethod
     def validate_database_url(cls, v: str) -> str:
         """Validate and normalize database URL."""
         if not v:
             raise ValueError("DATABASE_URL is required")
-        
+
         # Ensure async driver for PostgreSQL
         if v.startswith("postgresql://"):
             v = v.replace("postgresql://", "postgresql+asyncpg://")
-        
+
         return v
-    
-    @validator("SECRET_KEY")
+
+    @field_validator("SECRET_KEY")
+    @classmethod
     def validate_secret_key(cls, v: str) -> str:
         """Validate secret key strength."""
-        if len(v) < 32:
-            raise ValueError("SECRET_KEY must be at least 32 characters long")
+        # Allow shorter keys in test environment
+        import os
+        if os.getenv("ENVIRONMENT", "").lower() in ("test", "testing"):
+            if len(v) < 8:
+                raise ValueError("SECRET_KEY must be at least 8 characters long in test environment")
+        else:
+            if len(v) < 32:
+                raise ValueError("SECRET_KEY must be at least 32 characters long")
         return v
-    
-    @validator("ALLOWED_HOSTS", "CORS_ORIGINS", pre=True)
-    def parse_list_settings(cls, v) -> List[str]:
-        """Parse comma-separated string into list."""
-        if isinstance(v, str):
-            return [item.strip() for item in v.split(",") if item.strip()]
+
+    @field_validator("ALLOWED_HOSTS", "CORS_ORIGINS", "SUPPORTED_AUDIO_FORMATS", mode="before")
+    @classmethod
+    def parse_list_settings(cls, v) -> str:
+        """Ensure list settings are strings for storage."""
+        if isinstance(v, list):
+            return ",".join(v)
         return v
-    
+
     @property
     def is_production(self) -> bool:
         """Check if running in production environment."""
         return self.ENVIRONMENT.lower() == "production"
-    
+
     @property
     def is_development(self) -> bool:
         """Check if running in development environment."""
         return self.ENVIRONMENT.lower() == "development"
-    
+
     @property
     def is_testing(self) -> bool:
         """Check if running in testing environment."""
         return self.ENVIRONMENT.lower() in ("test", "testing")
 
+    @property
+    def allowed_hosts_list(self) -> List[str]:
+        """Get ALLOWED_HOSTS as a list."""
+        return [item.strip() for item in self.ALLOWED_HOSTS.split(",") if item.strip()]
+
+    @property
+    def cors_origins_list(self) -> List[str]:
+        """Get CORS_ORIGINS as a list."""
+        return [item.strip() for item in self.CORS_ORIGINS.split(",") if item.strip()]
+
+    @property
+    def supported_audio_formats_list(self) -> List[str]:
+        """Get SUPPORTED_AUDIO_FORMATS as a list."""
+        return [item.strip() for item in self.SUPPORTED_AUDIO_FORMATS.split(",") if item.strip()]
+
 @lru_cache()
 def get_settings() -> Settings:
     """Get cached settings instance."""
     return Settings()
-
-# Global settings instance
-settings = get_settings()

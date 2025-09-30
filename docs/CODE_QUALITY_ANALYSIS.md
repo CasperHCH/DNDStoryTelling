@@ -132,7 +132,7 @@ class Settings(BaseSettings):
     # Validation and type safety
     SECRET_KEY: str = Field(..., min_length=32)
     DATABASE_URL: str = Field(..., env="DATABASE_URL")
-    
+
     @validator("DATABASE_URL")
     def validate_database_url(cls, v: str) -> str:
         if v.startswith("postgresql://"):

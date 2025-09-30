@@ -62,7 +62,6 @@ This repository is an automated story generation tool for Dungeons & Dragons ses
 - Refer to `app/` for core application logic and `tests/` for examples of test patterns.
 - Ensure environment variables are correctly managed and documented.
 - Update or add documentation as needed, especially in `README.md` and inline comments.
-- Refer to `app/` for core application logic and `tests/` for examples of test patterns.
 - Always follow the existing coding style and conventions used in the repository.
 - Avoid introducing breaking changes without proper versioning and documentation.
 - Always use best practices for security and coding, especially when handling API keys and sensitive data.

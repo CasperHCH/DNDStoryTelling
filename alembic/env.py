@@ -3,7 +3,7 @@ from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 from alembic import context
 from app.models.database import Base
-from app.config import settings
+from app.config import get_settings
 from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
 import asyncio
 
@@ -15,7 +15,7 @@ if config.config_file_name is not None:
 target_metadata = Base.metadata
 
 def get_url():
-    return settings.DATABASE_URL
+    return get_settings().DATABASE_URL
 
 def run_migrations_offline():
     url = get_url()
@@ -44,7 +44,7 @@ def run_migrations_online():
                     connection=conn, target_metadata=target_metadata
                 )
             )
-            await connection.run_sync(context.run_migrations)
+            await connection.run_sync(lambda conn: context.run_migrations())
 
     asyncio.run(do_run_migrations())
 

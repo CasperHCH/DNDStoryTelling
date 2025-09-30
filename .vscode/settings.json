@@ -1,0 +1,40 @@
+{
+    "powershell.scriptAnalysis.enable": true,
+    "powershell.scriptAnalysis.settingsPath": ".vscode/PSScriptAnalyzerSettings.psd1",
+    "powershell.codeFormatting.preset": "OTBS",
+    "powershell.integratedConsole.showOnStartup": false,
+    "powershell.developer.powerShellExePath": "",
+    "powershell.powerShellDefaultVersion": "PowerShell (x64)",
+    "powershell.integratedConsole.suppressStartupBanner": false,
+
+    // Trust this workspace for PowerShell execution
+    "powershell.developer.editorServicesLogLevel": "Normal",
+    "powershell.scriptAnalysis.suppressedDiagnostics": [],
+
+    // File associations
+    "files.associations": {
+        "*.ps1": "powershell",
+        "*.psm1": "powershell",
+        "*.psd1": "powershell"
+    },
+
+    // Terminal settings for PowerShell
+    "terminal.integrated.profiles.windows": {
+        "PowerShell": {
+            "source": "PowerShell",
+            "icon": "terminal-powershell",
+            "args": [
+                "-NoLogo",
+                "-ExecutionPolicy", "RemoteSigned"
+            ]
+        }
+    },
+    "terminal.integrated.defaultProfile.windows": "PowerShell",
+
+    // Repository-specific settings
+    "python.defaultInterpreterPath": "python",
+    "docker.dockerPath": "docker",
+
+    // Allow script execution in this workspace
+    "security.workspace.trust.untrustedFiles": "open"
+}

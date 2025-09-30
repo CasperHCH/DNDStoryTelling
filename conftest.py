@@ -1,13 +1,19 @@
+import os
+
+# Set test environment variables BEFORE any app imports
+os.environ["ENVIRONMENT"] = "test"
+os.environ.setdefault("SECRET_KEY", "test_secret_key_that_is_long_enough_for_testing_12345")
+os.environ.setdefault("DATABASE_URL", "postgresql+asyncpg://user:password@localhost:5432/dndstory_test")
+
 import pytest
 import asyncio
-import os
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import create_engine
 from app.models.database import Base
 from fastapi.testclient import TestClient
-import tempfile
 from pathlib import Path
+from app.utils.temp_manager import temp_file
 
 # Test database URL - use the one from environment or fallback to async PostgreSQL test URL
 TEST_DATABASE_URL = os.getenv("DATABASE_URL", "postgresql+asyncpg://user:password@localhost:5432/dndstory_test")
@@ -67,23 +73,19 @@ def client(app):
 
 @pytest.fixture
 def audio_file():
-    """Create a temporary audio file for testing."""
-    with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp:
+    """Create a temporary audio file for testing using centralized temp manager."""
+    with temp_file(suffix=".wav", directory="test_audio") as tmp_path:
         # Create a minimal WAV file header
         wav_header = b'RIFF$\x00\x00\x00WAVEfmt \x10\x00\x00\x00\x01\x00\x01\x00D\xac\x00\x00\x88X\x01\x00\x02\x00\x10\x00data\x00\x00\x00\x00'
-        tmp.write(wav_header)
-        tmp.flush()
-        yield tmp.name
+        with open(tmp_path, 'wb') as f:
+            f.write(wav_header)
 
-    # Clean up
-    try:
-        os.unlink(tmp.name)
-    except:
-        pass# Mock configurations for tests that don't need actual services
+        yield str(tmp_path)
+    # File is automatically cleaned up by context manager# Mock configurations for tests that don't need actual services
 @pytest.fixture(autouse=True)
 def mock_env_vars(monkeypatch):
     """Mock environment variables for testing."""
-    monkeypatch.setenv("SECRET_KEY", "test_secret_key")
+    monkeypatch.setenv("SECRET_KEY", "test_secret_key_that_is_long_enough_for_testing_validation_purposes")
     monkeypatch.setenv("OPENAI_API_KEY", "test_openai_key")
     monkeypatch.setenv("CONFLUENCE_API_TOKEN", "test_confluence_token")
     monkeypatch.setenv("CONFLUENCE_URL", "https://test.atlassian.net")

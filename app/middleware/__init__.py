@@ -2,5 +2,11 @@
 
 from .error_handler import error_handler_middleware
 from .logging import logging_middleware
+from .security import SecurityHeadersMiddleware, RequestLoggingMiddleware
 
-__all__ = ["error_handler_middleware", "logging_middleware"]
+__all__ = [
+    "error_handler_middleware",
+    "logging_middleware",
+    "SecurityHeadersMiddleware",
+    "RequestLoggingMiddleware"
+]

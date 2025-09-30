@@ -12,11 +12,14 @@ from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import JSONResponse, HTMLResponse
 import socketio
 
-from app.config import settings
+from app.config import get_settings
 from app.models.database import init_db, engine
 from app.routes import auth, story, confluence
 from app.services.audio_processor import AudioProcessor
 from app.services.story_generator import StoryGenerator
+
+# Initialize settings
+settings = get_settings()
 
 # Configure logging
 logging.basicConfig(
@@ -36,9 +39,9 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.error(f"Failed to initialize database: {e}")
         raise
-    
+
     yield
-    
+
     # Shutdown
     logger.info("Shutting down D&D Story Telling application...")
     try:
@@ -57,9 +60,18 @@ app = FastAPI(
 )
 
 # Security middleware
+from app.middleware import SecurityHeadersMiddleware, RequestLoggingMiddleware
+
+# Add security headers
+app.add_middleware(SecurityHeadersMiddleware)
+
+# Add request logging (only in development)
+if settings.DEBUG:
+    app.add_middleware(RequestLoggingMiddleware)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"] if settings.DEBUG else ["https://yourdomain.com"],
+    allow_origins=settings.cors_origins_list if not settings.DEBUG else ["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -67,7 +79,7 @@ app.add_middleware(
 
 app.add_middleware(
     TrustedHostMiddleware,
-    allowed_hosts=["*"] if settings.DEBUG else ["yourdomain.com", "*.yourdomain.com"]
+    allowed_hosts=settings.allowed_hosts_list if not (settings.DEBUG or settings.is_testing) else ["*"]
 )
 
 # Initialize SocketIO
@@ -101,28 +113,46 @@ async def read_root(request: Request):
 @app.get("/health")
 async def health_check() -> Dict[str, Any]:
     """Comprehensive health check endpoint."""
+    from datetime import timezone
+    health_status = {
+        "status": "healthy",
+        "timestamp": str(datetime.now(timezone.utc)),
+        "version": settings.VERSION,
+        "environment": settings.ENVIRONMENT,
+        "checks": {}
+    }
+
     try:
         # Check database connection
+        from sqlalchemy import text
         async with engine.begin() as conn:
-            await conn.execute("SELECT 1")
-        
-        return {
-            "status": "healthy",
-            "timestamp": str(datetime.utcnow()),
-            "version": "1.0.0",
-            "database": "connected",
-            "environment": "development" if settings.DEBUG else "production"
+            await conn.execute(text("SELECT 1"))
+        health_status["checks"]["database"] = "healthy"
+    except Exception as e:
+        health_status["checks"]["database"] = f"unhealthy: {str(e)}"
+        health_status["status"] = "unhealthy"
+
+    # Check disk space for temp files
+    try:
+        from app.utils.temp_manager import get_temp_stats
+        temp_stats = get_temp_stats()
+        health_status["checks"]["temp_files"] = {
+            "total_files": temp_stats.get("total_files", 0),
+            "temp_directory": temp_stats.get("temp_directory", "unknown")
         }
     except Exception as e:
-        logger.error(f"Health check failed: {e}")
-        return JSONResponse(
-            status_code=503,
-            content={
-                "status": "unhealthy",
-                "timestamp": str(datetime.utcnow()),
-                "error": str(e)
-            }
-        )
+        health_status["checks"]["temp_files"] = f"error: {str(e)}"
+
+    # Check if API keys are configured (without exposing them)
+    health_status["checks"]["api_keys"] = {
+        "openai": "configured" if settings.OPENAI_API_KEY else "not configured",
+        "confluence": "configured" if settings.CONFLUENCE_API_TOKEN else "not configured"
+    }
+
+    if health_status["status"] == "unhealthy":
+        return JSONResponse(status_code=503, content=health_status)
+
+    return health_status
 
 # SocketIO event handlers
 @sio.on('connect')
@@ -143,11 +173,11 @@ async def handle_message(sid, data):
         if not data or 'text' not in data:
             await sio.emit('error', {'message': 'Invalid message format'}, room=sid)
             return
-        
+
         # TODO: Implement actual AI response logic
         response = {"text": f"AI response to: {data['text']}"}
         await sio.emit('response', response, room=sid)
-        
+
     except Exception as e:
         logger.error(f"Error handling message from {sid}: {e}")
         await sio.emit('error', {'message': 'Failed to process message'}, room=sid)

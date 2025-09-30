@@ -1,4 +1,129 @@
-# PowerShell specific
+# ===== SECRETS AND CREDENTIALS =====
+# Environment files with secrets
+.env
+.env.local
+.env.*.local
+synology.env
+*.secret
+*.key
+*.pfx
+*.pem
+*.cer
+*.crt
+
+# But keep example/template env files
+!.env.example
+!.env.template
+
+# ===== PYTHON GENERATED FILES =====
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyc
+*.pyo
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.coverage
+.coverage.*
+.cache
+.pytest_cache/
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+test-results/
+coverage/
+
+# ===== DEVELOPMENT FILES =====
+# VSCode settings (keep essential ones)
+.vscode/launch.json
+.vscode/tasks.json
+.vscode/extensions.json
+.vscode/*.log
+.vscode/c_cpp_properties.json
+
+# Keep these VSCode files for project setup
+!.vscode/settings.json
+!.vscode/PSScriptAnalyzerSettings.psd1
+
+# IDE files
+.idea/
+*.code-workspace
+*.swp
+*.swo
+
+# ===== LOGS AND TEMPORARY FILES =====
+# Logs
+*.log
+logs/
+*.evtx
+
+# Temporary files
+*.tmp
+*.bak
+*.cache
+*.DS_Store
+Thumbs.db
+.DS_Store
+
+# Windows PowerShell history
+ConsoleHost_history.txt
+
+# ===== DATABASE FILES =====
+# SQLite databases (test databases)
+*.db
+*.sqlite
+*.sqlite3
+
+# But keep example/schema files
+!schema.sql
+!migrations/*.sql
+
+# ===== DOCKER AND DEPLOYMENT =====
+# Docker volumes and temporary containers
+.docker/
+docker-compose.override.yml
+
+# But keep our deployment configurations
+!docker-compose.yml
+!docker-compose.test.yml
+!docker-compose.synology.yml
+!Dockerfile
+!Dockerfile.test
+
+# ===== NODE/NPM (if used for tools) =====
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ===== POWERSHELL TEMPORARY FILES =====
+# PowerShell temporary files
 *.ps1~
 *.psm1~
 *.psd1~
@@ -9,59 +134,44 @@
 *.ps1proj
 *.ps1proj.user
 
-# Logs
-*.log
-logs/
-*.evtx
-
-# Output and temp files
-*.tmp
-*.bak
-*.swp
-*.swo
-*.cache
-*.DS_Store
-Thumbs.db
-
-# Secrets and credentials
-*.secret
-*.key
-*.pfx
-*.pem
-*.cer
-*.crt
-
-# Environment files
-.env
-.env.*
-
-# VSCode and IDE files
-.vscode/
-.idea/
-*.code-workspace
-
-# Node/npm (if used for tools)
-node_modules/
-npm-debug.log*
-
-# Python (if used for tools)
-__pycache__/
-*.pyc
-
-# Test results
-test-results/
-coverage/
-
 # PowerShell Gallery output
 *.nupkg
 
-# Misc
+# ===== MISC FILES =====
+# Compressed files (usually temporary)
 *.zip
 *.tar.gz
 *.7z
+*.rar
 
-# Ignore local configuration
+# OS generated files
+Thumbs.db
+.DS_Store
+
+# Local configuration overrides
 *.local
+local_config.*
 
-# Windows PowerShell history
-ConsoleHost_history.txt
+# Backup files
+*.backup
+*~
+
+# ===== TEMPORARY BUILD/DEPLOY DIRECTORIES =====
+# Temporary directories that might be created during deployment
+alembic_new/
+temp/
+tmp/
+.temp/
+
+# ===== KEEP IMPORTANT PROJECT FILES =====
+# These comments ensure we explicitly keep important files:
+# - All .ps1, .psm1, .psd1 PowerShell scripts and modules
+# - All .py Python source files
+# - All .md documentation files
+# - All .yml/.yaml configuration files
+# - All .json configuration files
+# - All .ini configuration files
+# - All Dockerfile and docker-compose files
+# - All alembic migration files
+# - All test files
+# - Essential .vscode settings

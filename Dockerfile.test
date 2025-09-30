@@ -1,0 +1,46 @@
+# Test-specific Dockerfile with enhanced testing capabilities
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install system dependencies including audio processing tools
+RUN apt-get update && apt-get install -y \
+    gcc \
+    ffmpeg \
+    libpq-dev \
+    netcat-openbsd \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements files
+COPY requirements.txt test-requirements.txt ./
+
+# Install all Python dependencies (production + test)
+RUN pip install --no-cache-dir -r requirements.txt && \
+    pip install --no-cache-dir -r test-requirements.txt
+
+# Install additional test dependencies
+RUN pip install \
+    asyncpg \
+    aiosqlite \
+    email-validator \
+    pydantic-settings \
+    pytest-asyncio \
+    pytest-cov \
+    httpx
+
+# Install Playwright for UI tests (skip browser installation for now)
+RUN pip install playwright
+# Note: Playwright browsers will be installed separately if needed for UI tests
+
+# Copy application code
+COPY . .
+
+# Create necessary directories
+RUN mkdir -p /app/static /app/templates /app/uploads /app/test_uploads
+
+# Set Python path
+ENV PYTHONPATH=/app
+
+# Default command for running tests
+CMD ["python", "-m", "pytest", "tests/", "-v", "--tb=short", "--cov=app"]

@@ -18,7 +18,7 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/token")
 
 class UserRegister(BaseModel):
     """User registration request model."""
-    username: str = Field(..., min_length=3, max_length=50, regex="^[a-zA-Z0-9_-]+$")
+    username: str = Field(..., min_length=3, max_length=50, pattern="^[a-zA-Z0-9_-]+$")
     email: EmailStr
     password: str = Field(..., min_length=8, max_length=100)
 
@@ -38,7 +38,7 @@ async def login(
         query = select(User).where(User.username == form_data.username)
         result = await db.execute(query)
         user = result.scalars().first()
-        
+
         if not user or not verify_password(form_data.password, user.hashed_password):
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
@@ -48,7 +48,7 @@ async def login(
 
         access_token = create_access_token(data={"sub": user.username})
         return TokenResponse(access_token=access_token)
-        
+
     except HTTPException:
         raise
     except Exception as e:
@@ -69,7 +69,7 @@ async def register(
         query = select(User).where(User.username == user_data.username)
         result = await db.execute(query)
         existing_user = result.scalars().first()
-        
+
         if existing_user:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -80,7 +80,7 @@ async def register(
         query = select(User).where(User.email == user_data.email)
         result = await db.execute(query)
         existing_email = result.scalars().first()
-        
+
         if existing_email:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -96,10 +96,10 @@ async def register(
         db.add(new_user)
         await db.commit()
         await db.refresh(new_user)
-        
+
         logger.info(f"New user registered: {user_data.username}")
         return {"message": "User created successfully"}
-        
+
     except HTTPException:
         raise
     except Exception as e:

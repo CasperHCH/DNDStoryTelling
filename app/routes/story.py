@@ -5,7 +5,7 @@ from app.services.story_generator import StoryGenerator
 from app.models.database import get_db
 from app.models.user import User
 from app.auth.auth_handler import get_current_user
-import tempfile
+from app.utils.temp_manager import temp_file
 import os
 
 router = APIRouter(prefix="/story", tags=["story"])
@@ -17,25 +17,55 @@ async def upload_file(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    if not current_user.openai_api_key:
-        raise HTTPException(status_code=400, detail="OpenAI API key not configured")
+    import logging
+    logger = logging.getLogger(__name__)
 
-    story_generator = StoryGenerator(current_user.openai_api_key)
-    audio_processor = AudioProcessor()
+    try:
+        # Validate user configuration
+        if not current_user.openai_api_key:
+            raise HTTPException(status_code=400, detail="OpenAI API key not configured")
 
-    with tempfile.NamedTemporaryFile(delete=False) as temp_file:
+        # Validate file
+        if not file.filename:
+            raise HTTPException(status_code=400, detail="No file provided")
+
+        # Check file size (50MB limit)
+        if file.size and file.size > 50 * 1024 * 1024:
+            raise HTTPException(status_code=413, detail="File too large (max 50MB)")
+
+        logger.info(f"Processing file upload: {file.filename} ({file.content_type})")
+
+        story_generator = StoryGenerator(current_user.openai_api_key)
+        audio_processor = AudioProcessor()
+
+        # Read file content
         content = await file.read()
-        temp_file.write(content)
-        temp_file.flush()
 
-        # Process audio to text if it's an audio file
-        if file.content_type.startswith('audio/'):
-            text = await audio_processor.process_audio(temp_file.name)
-        else:
-            text = content.decode()
+        # Use centralized temp file management for uploaded files
+        with temp_file(suffix=f"_{file.filename}", directory="uploads") as temp_path:
+            with open(temp_path, 'wb') as f:
+                f.write(content)
 
-        # Generate story
-        story = await story_generator.generate_story(text, context)
+            # Process audio to text if it's an audio file
+            if file.content_type and file.content_type.startswith('audio/'):
+                logger.info("Processing audio file for transcription")
+                text = await audio_processor.process_audio(str(temp_path))
+            else:
+                logger.info("Processing text file")
+                try:
+                    text = content.decode('utf-8')
+                except UnicodeDecodeError:
+                    raise HTTPException(status_code=400, detail="Invalid text file encoding")
 
-        os.unlink(temp_file.name)
-        return {"story": story}
+            # Generate story
+            logger.info("Generating story from processed text")
+            story = await story_generator.generate_story(text, context)
+
+            logger.info(f"Successfully processed file: {file.filename}")
+            return {"story": story}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error processing file upload: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Internal server error processing file")

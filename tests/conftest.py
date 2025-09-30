@@ -1,19 +1,33 @@
 # filepath: c:\repos\DNDStoryTelling\tests\conftest.py
+import os
 import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+from fastapi.testclient import TestClient
+
+# Set up test environment variables before importing the app
+os.environ["ENVIRONMENT"] = "test"
+os.environ["DEBUG"] = "true"
+os.environ["DATABASE_URL"] = "sqlite:///test.db"
+os.environ["SECRET_KEY"] = "test-secret-key-for-development-only-that-is-long-enough-for-validation"
+
+# Now import after environment is set
+from app.config import get_settings
+from app.main import app as fastapi_app
 from app.models.database import Base
 from app.models.user import User
 from app.auth.auth_handler import get_password_hash, create_access_token
-import os
-from fastapi.testclient import TestClient
-from app import app
 
-TEST_DATABASE_URL = "postgresql+asyncpg://user:password@localhost:5432/dndstory_test"
+# Clear the settings cache to ensure test environment variables are used
+get_settings.cache_clear()
+
+TEST_DATABASE_URL = "sqlite+aiosqlite:///test.db"
 
 @pytest.fixture(scope="session")
 def engine():
-    engine = create_engine(TEST_DATABASE_URL)
+    # Use synchronous SQLite for test database operations
+    sync_test_url = "sqlite:///test.db"
+    engine = create_engine(sync_test_url)
     Base.metadata.create_all(bind=engine)
     yield engine
     Base.metadata.drop_all(bind=engine)
@@ -56,8 +70,18 @@ def test_token(test_user):
     return create_access_token(data={"sub": test_user.username})
 
 @pytest.fixture
+def app():
+    """App fixture for testing."""
+    return fastapi_app
+
+@pytest.fixture
+def client():
+    """Basic test client fixture."""
+    return TestClient(fastapi_app)
+
+@pytest.fixture
 def authorized_client(test_token):
-    client = TestClient(app)
+    client = TestClient(fastapi_app)
     client.headers = {
         **client.headers,
         "Authorization": f"Bearer {test_token}"
