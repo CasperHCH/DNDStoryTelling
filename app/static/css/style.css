@@ -1,0 +1,60 @@
+/* Dark mode setup */
+:root {
+    color-scheme: light;
+}
+
+.dark {
+    color-scheme: dark;
+}
+
+/* Animation for typing indicator */
+.animate-pulse {
+    animation: pulse 1.5s infinite;
+}
+
+.delay-150 {
+    animation-delay: 0.15s;
+}
+
+.delay-300 {
+    animation-delay: 0.3s;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 0.3;
+    }
+    50% {
+        opacity: 1;
+    }
+}
+
+/* Transitions for upload progress */
+#upload-progress-bar {
+    transition: width 0.2s ease-in-out;
+}
+
+/* Better focus states for accessibility */
+input:focus, button:focus {
+    outline: 2px solid rgba(59, 130, 246, 0.5);
+    outline-offset: 2px;
+}
+
+/* Improved hover states */
+button:hover {
+    transform: translateY(-1px);
+    transition: all 0.2s;
+}
+
+button:active {
+    transform: translateY(0px);
+}
+
+/* File upload styling */
+#drop-zone {
+    transition: all 0.2s ease;
+}
+
+#drop-zone:hover {
+    background-color: rgba(59, 130, 246, 0.05);
+}

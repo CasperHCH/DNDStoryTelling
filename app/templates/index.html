@@ -3,57 +3,77 @@
 {% block title %}Home{% endblock %}
 
 {% block content %}
-<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-    <!-- File Upload Area -->
-    <div class="bg-white p-6 rounded-lg shadow-md">
-        <div id="drop-zone" class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
-            <p class="text-gray-500">Drag and drop your file here or</p>
-            <input type="file" id="file-input" class="hidden" accept=".txt,.mp3,.wav">
-            <button onclick="document.getElementById('file-input').click()" class="mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
-                Choose File
-            </button>
+<div class="flex flex-col gap-4">
+    <!-- Configuration Area - Now at the top -->
+    <div class="bg-white p-4 rounded-lg shadow-md dark:bg-gray-800 dark:text-white transition-colors">
+        <div class="flex justify-between items-center mb-2">
+            <h2 class="font-bold">Configuration</h2>
+            <button id="toggle-config" class="text-blue-500 dark:text-blue-400 hover:underline text-sm">Show/Hide</button>
         </div>
-        <div id="file-info" class="mt-4 hidden">
-            <p class="text-sm text-gray-600">Selected file: <span id="file-name"></span></p>
-            <button id="upload-btn" class="mt-2 bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">
-                Process File
-            </button>
-        </div>
-    </div>
-
-    <!-- Chat Area -->
-    <div class="bg-white p-6 rounded-lg shadow-md">
-        <div id="chat-messages" class="h-96 overflow-y-auto mb-4 p-4 border rounded-lg">
-            <div class="welcome-message text-gray-600">
-                Welcome! Upload a file to start the conversation.
+        <div id="config-fields" class="flex flex-wrap items-center gap-3">
+            <div class="flex-1 min-w-[200px]">
+                <label for="confluence-url" class="block text-xs font-medium text-gray-700">Confluence URL</label>
+                <input type="text" id="confluence-url" class="mt-1 p-1 border rounded w-full text-sm" placeholder="https://your-domain.atlassian.net">
+            </div>
+            <div class="flex-1 min-w-[200px]">
+                <label for="confluence-api-token" class="block text-xs font-medium text-gray-700">Confluence API Token</label>
+                <input type="text" id="confluence-api-token" class="mt-1 p-1 border rounded w-full text-sm" placeholder="Your API Token">
+            </div>
+            <div class="flex-1 min-w-[200px]">
+                <label for="confluence-parent-page-id" class="block text-xs font-medium text-gray-700">Confluence Parent Page ID</label>
+                <input type="text" id="confluence-parent-page-id" class="mt-1 p-1 border rounded w-full text-sm" placeholder="123456789">
+            </div>
+            <div class="flex-1 min-w-[200px]">
+                <label for="openai-api-key" class="block text-xs font-medium text-gray-700">OpenAI API Key</label>
+                <input type="text" id="openai-api-key" class="mt-1 p-1 border rounded w-full text-sm" placeholder="sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx">
+            </div>
+            <div class="flex items-end">
+                <button type="button" id="save-config-btn" class="bg-blue-500 text-white px-3 py-1 rounded text-sm hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700">Save</button>
             </div>
         </div>
-        <div class="flex gap-2">
-            <input type="text" id="message-input" class="flex-1 p-2 border rounded" placeholder="Type your message...">
-            <button id="send-btn" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
-                Send
-            </button>
-        </div>
     </div>
 
-    <!-- Configuration Area -->
-    <div class="bg-white p-6 rounded-lg shadow-md">
-        <h2 class="text-lg font-bold mb-4">Configuration</h2>
-        <form id="config-form">
-            <label for="confluence-url" class="block text-sm font-medium text-gray-700">Confluence URL</label>
-            <input type="text" id="confluence-url" class="mt-1 p-2 border rounded w-full" placeholder="https://your-domain.atlassian.net">
+    <!-- Main Content Area - File Upload and Chat -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <!-- File Upload Area - Now smaller on the left -->
+        <div class="bg-white p-4 rounded-lg shadow-md dark:bg-gray-800 dark:text-white transition-colors">
+            <h2 class="text-lg font-bold mb-2">Upload File</h2>
+            <div id="drop-zone" class="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-6 text-center hover:border-blue-500 dark:hover:border-blue-400 transition-colors">
+                <p class="text-gray-500 text-sm">Drag and drop your file here</p>
+                <p class="text-gray-400 text-xs mb-2">or</p>
+                <input type="file" id="file-input" class="hidden" accept=".txt,.mp3,.wav">
+                <button onclick="document.getElementById('file-input').click()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 text-sm">
+                    Select File
+                </button>
+            </div>
+            <div id="file-info" class="mt-4 hidden">
+                <div class="flex items-center justify-between">
+                    <p class="text-sm text-gray-600">Selected file: <span id="file-name" class="font-medium"></span></p>
+                    <button class="text-xs text-red-500" id="clear-file-btn">✕</button>
+                </div>
+                <div id="upload-progress" class="w-full bg-gray-200 rounded-full h-2 my-2 hidden">
+                    <div id="upload-progress-bar" class="bg-blue-600 h-2 rounded-full" style="width: 0%"></div>
+                </div>
+                <button id="upload-btn" class="w-full mt-2 bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 text-sm">
+                    Process File
+                </button>
+            </div>
+        </div>
 
-            <label for="confluence-api-token" class="block text-sm font-medium text-gray-700 mt-4">Confluence API Token</label>
-            <input type="text" id="confluence-api-token" class="mt-1 p-2 border rounded w-full" placeholder="Your API Token">
-
-            <label for="confluence-parent-page-id" class="block text-sm font-medium text-gray-700 mt-4">Confluence Parent Page ID</label>
-            <input type="text" id="confluence-parent-page-id" class="mt-1 p-2 border rounded w-full" placeholder="123456789">
-
-            <label for="openai-api-key" class="block text-sm font-medium text-gray-700 mt-4">OpenAI API Key</label>
-            <input type="text" id="openai-api-key" class="mt-1 p-2 border rounded w-full" placeholder="sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx">
-
-            <button type="submit" class="mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Save Configuration</button>
-        </form>
+        <!-- Chat Area - Now larger on the right -->
+        <div class="bg-white p-4 rounded-lg shadow-md dark:bg-gray-800 dark:text-white md:col-span-2 transition-colors">
+            <div id="chat-messages" class="h-[500px] overflow-y-auto mb-4 p-4 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-900 transition-colors">
+                <div class="welcome-message text-gray-600">
+                    Welcome! Upload a file to start the conversation.
+                </div>
+            </div>
+            <div class="flex gap-2">
+                <input type="text" id="message-input" class="flex-1 p-2 border rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white transition-colors" placeholder="Type your message...">
+                <button id="send-btn" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 transition-colors">
+                    Send
+                </button>
+            </div>
+        </div>
     </div>
 </div>
 {% endblock %}
