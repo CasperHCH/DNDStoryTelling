@@ -3,11 +3,16 @@
 import asyncio
 import logging
 import os
+import warnings
 from pathlib import Path
 from typing import Optional, Dict, Any, List
 import whisper
-from pydub import AudioSegment
-from pydub.exceptions import CouldntDecodeError
+
+# Suppress pydub warnings about missing ffmpeg during import
+with warnings.catch_warnings():
+    warnings.simplefilter("ignore", RuntimeWarning)
+    from pydub import AudioSegment
+    from pydub.exceptions import CouldntDecodeError
 
 from app.config import get_settings
 from app.utils.temp_manager import temp_file, cleanup_old_temp_files, TempFileManager
