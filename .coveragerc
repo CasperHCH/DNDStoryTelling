@@ -11,9 +11,6 @@ source = app/
 # Parallel processing support for faster coverage
 parallel = true
 
-# Include patterns
-include = app/*
-
 # Exclude patterns
 omit =
     app/__pycache__/*

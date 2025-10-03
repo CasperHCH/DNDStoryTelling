@@ -134,8 +134,8 @@
 
 ### **Testing Scripts**: ✅ COMPREHENSIVE
 - `run_comprehensive_tests.py`: Full test suite execution
-- `test_core_systems.py`: Core functionality validation
-- `test_health_checks.py`: Health monitoring validation
+- `testing/manual_tests/test_core_systems.py`: Core functionality validation
+- `testing/manual_tests/test_health_checks.py`: Health monitoring validation
 
 ### **Configuration Files**: ✅ PROFESSIONAL
 - `pyproject.toml`: Centralized Python project configuration

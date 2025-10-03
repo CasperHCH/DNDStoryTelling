@@ -1,8 +1,8 @@
 services:
   web:
     build:
-      context: .
-      dockerfile: Dockerfile
+      context: ../..
+      dockerfile: deployment/docker/Dockerfile
       args:
         - PIP_DEFAULT_TIMEOUT=300
         - PIP_RETRIES=5
@@ -20,9 +20,9 @@ services:
       db:
         condition: service_healthy
     volumes:
-      - .:/app
-      - ./alembic.ini:/app/alembic.ini
-      - ./alembic:/app/alembic
+      - ../../:/app
+      - ../../alembic.ini:/app/alembic.ini
+      - ../../alembic:/app/alembic
       - app_uploads:/app/uploads
       - app_logs:/app/logs
     working_dir: /app

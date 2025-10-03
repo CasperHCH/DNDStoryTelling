@@ -15,7 +15,7 @@ isort==5.12.0
 flake8==6.1.0
 mypy==1.7.0
 bandit==1.7.5               # Security linting
-safety==2.3.5               # Dependency security scanning
+safety==3.0.1               # Dependency security scanning
 
 # Database drivers for testing
 psycopg2-binary==2.9.7      # For synchronous PostgreSQL operations in tests

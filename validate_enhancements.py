@@ -86,7 +86,6 @@ def main():
         ("Performance tests", "testing/tests/test_performance_benchmarks.py"),
         ("Story generation tests", "testing/tests/test_story_generator_enhanced.py"),
         ("Test runner", "testing/run_comprehensive_tests.py"),
-        ("Core validation", "test_core_systems.py"),
     ]
 
     for name, filepath in test_files:

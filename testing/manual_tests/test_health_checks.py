@@ -2,9 +2,12 @@
 """Test the health check functionality without full server startup."""
 
 import sys
-sys.path.append('.')
-
 import asyncio
+from pathlib import Path
+
+# Add project root to path
+project_root = Path(__file__).parent.parent.parent
+sys.path.insert(0, str(project_root))
 from app.utils.monitoring import health_checker, check_database_connection, check_disk_space, check_memory_usage
 
 async def test_health_checks():
