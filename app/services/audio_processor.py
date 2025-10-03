@@ -82,6 +82,8 @@ class AudioProcessor:
         """
         file_path = Path(file_path)
 
+        import time
+
         try:
             # Validate input file
             self.validate_audio_file(file_path)
@@ -90,6 +92,7 @@ class AudioProcessor:
             normalized_path = await self._normalize_audio_format(file_path)
 
             # Run transcription in thread pool to avoid blocking
+            start_time = time.time()
             loop = asyncio.get_event_loop()
             result = await loop.run_in_executor(
                 None,
@@ -98,6 +101,7 @@ class AudioProcessor:
                 language,
                 task
             )
+            processing_time = time.time() - start_time
 
             # Clean up temporary file if created
             if normalized_path != file_path:
@@ -117,7 +121,7 @@ class AudioProcessor:
                 "confidence": overall_confidence,
                 "duration": self._get_audio_duration(file_path),
                 "file_size": file_path.stat().st_size,
-                "processing_time": result.get("processing_time", 0.0),
+                "processing_time": processing_time,
                 "processing_successful": True
             }
 

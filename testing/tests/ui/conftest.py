@@ -40,7 +40,7 @@ def ensure_server_running():
             else:
                 pytest.fail(f"Server at {base_url} is not responding after {max_attempts} attempts")
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def base_url():
     """Base URL for the application."""
     return "http://localhost:8000"

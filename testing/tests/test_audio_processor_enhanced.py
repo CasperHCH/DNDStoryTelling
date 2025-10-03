@@ -30,7 +30,7 @@ class TestAudioProcessorUnit:
     def test_validate_audio_file_nonexistent(self, processor, tmp_path):
         """Test validation fails for non-existent files."""
         fake_file = tmp_path / "nonexistent.wav"
-        with pytest.raises(AudioProcessingError, match="Audio file not found"):
+        with pytest.raises(AudioProcessingError, match="Security validation failed: File does not exist"):
             processor.validate_audio_file(fake_file)
 
     @pytest.mark.unit
@@ -54,7 +54,7 @@ class TestAudioProcessorUnit:
             # This will fail because file doesn't exist, but shouldn't crash
             processor.validate_audio_file(test_path)
         except AudioProcessingError as e:
-            assert "not found" in str(e)
+            assert "Security validation failed" in str(e)
 
 
 class TestAudioProcessorIntegration:
