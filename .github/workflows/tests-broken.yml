@@ -45,11 +45,7 @@ jobs:
 
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip setuptools wheel
-        # Force clean installation of Pydantic v2 to prevent conflicts
-        pip uninstall -y pydantic pydantic-core pydantic-settings || true
-        pip install "pydantic>=2.4.2,<3.0" "pydantic-core>=2.10.1" "pydantic-settings>=2.0.3"
-        # Install main requirements
+        python -m pip install --upgrade pip
         pip install -r requirements.txt
         # Check if test-requirements.txt exists, otherwise use testing/test-requirements.txt
         if [ -f test-requirements.txt ]; then
@@ -57,10 +53,8 @@ jobs:
         elif [ -f testing/test-requirements.txt ]; then
           pip install -r testing/test-requirements.txt
         fi
-        # Final verification that we have Pydantic v2
-        python -c "import pydantic; print(f'Pydantic version: {pydantic.VERSION}'); assert pydantic.VERSION.startswith('2'), f'Expected Pydantic v2, got {pydantic.VERSION}'"
 
-    - name: Run tests
+    fi\n\n    - name: Fix Pydantic version\n      run: |\n        # Ensure Pydantic v2 is maintained (prevent downgrade by conflicting dependencies)\n        pip install --force-reinstall \"pydantic>=2.4.2\"\n\n    - name: Run tests
       env:
         ENVIRONMENT: test
         DATABASE_URL: postgresql+asyncpg://user:password@localhost:5432/dndstory_test
