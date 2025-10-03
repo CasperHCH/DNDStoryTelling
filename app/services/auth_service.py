@@ -2,7 +2,8 @@
 
 import logging
 from datetime import datetime, timedelta
-from typing import Optional, Dict, Any
+from typing import Any, Dict, Optional
+
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -13,9 +14,12 @@ from app.models.user import User
 
 logger = logging.getLogger(__name__)
 
+
 class AuthenticationError(Exception):
     """Custom exception for authentication errors."""
+
     pass
+
 
 class AuthService:
     """Service for handling user authentication and authorization."""
@@ -34,9 +38,7 @@ class AuthService:
         return self.pwd_context.hash(password)
 
     def create_access_token(
-        self,
-        data: Dict[str, Any],
-        expires_delta: Optional[timedelta] = None
+        self, data: Dict[str, Any], expires_delta: Optional[timedelta] = None
     ) -> str:
         """Create JWT access token."""
         to_encode = data.copy()
@@ -66,11 +68,7 @@ class AuthService:
             logger.warning(f"Invalid token: {e}")
             return None
 
-    async def authenticate_user(
-        self,
-        username: str,
-        password: str
-    ) -> Optional[Dict[str, Any]]:
+    async def authenticate_user(self, username: str, password: str) -> Optional[Dict[str, Any]]:
         """Authenticate user and return token data."""
         try:
             # Get user from database
@@ -91,16 +89,14 @@ class AuthService:
             await self.db.commit()
 
             # Create access token
-            access_token = self.create_access_token(
-                data={"sub": user.username, "user_id": user.id}
-            )
+            access_token = self.create_access_token(data={"sub": user.username, "user_id": user.id})
 
             logger.info(f"User authenticated successfully: {username}")
 
             return {
                 "access_token": access_token,
                 "token_type": "bearer",
-                "expires_in": get_settings().ACCESS_TOKEN_EXPIRE_MINUTES * 60
+                "expires_in": get_settings().ACCESS_TOKEN_EXPIRE_MINUTES * 60,
             }
 
         except Exception as e:

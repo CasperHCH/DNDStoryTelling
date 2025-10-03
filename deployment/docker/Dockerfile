@@ -22,9 +22,17 @@ ENV PIP_DEFAULT_TIMEOUT=${PIP_DEFAULT_TIMEOUT}
 ENV PIP_RETRIES=${PIP_RETRIES}
 ENV PIP_NO_CACHE_DIR=1
 
+# Configure testing environment
+ENV PYTHONPATH=/app
+ENV TESTING=1
+ENV MOCK_AUDIO_PROCESSING=true
+ENV SKIP_AUDIO_TESTS=false
+
 # Copy requirements and install Python packages in single layer
 COPY requirements.txt .
+COPY testing/test-requirements.txt ./testing/
 RUN pip install -r requirements.txt \
+    && pip install -r testing/test-requirements.txt \
     && pip install playwright ffmpeg-python asyncpg \
     && playwright install --with-deps \
     && rm -rf /root/.cache/pip

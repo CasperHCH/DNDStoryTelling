@@ -2,12 +2,14 @@
 
 import logging
 from typing import Callable
-from fastapi import Request, Response, HTTPException
+
+from fastapi import HTTPException, Request, Response
 from fastapi.responses import JSONResponse
-from sqlalchemy.exc import SQLAlchemyError
 from pydantic import ValidationError
+from sqlalchemy.exc import SQLAlchemyError
 
 logger = logging.getLogger(__name__)
+
 
 async def error_handler_middleware(request: Request, call_next: Callable) -> Response:
     """Global error handling middleware."""
@@ -27,8 +29,8 @@ async def error_handler_middleware(request: Request, call_next: Callable) -> Res
             content={
                 "error": "Validation Error",
                 "detail": exc.errors(),
-                "message": "Request validation failed"
-            }
+                "message": "Request validation failed",
+            },
         )
 
     except SQLAlchemyError as exc:
@@ -38,8 +40,8 @@ async def error_handler_middleware(request: Request, call_next: Callable) -> Res
             status_code=500,
             content={
                 "error": "Database Error",
-                "message": "A database error occurred. Please try again later."
-            }
+                "message": "A database error occurred. Please try again later.",
+            },
         )
 
     except Exception as exc:
@@ -49,6 +51,6 @@ async def error_handler_middleware(request: Request, call_next: Callable) -> Res
             status_code=500,
             content={
                 "error": "Internal Server Error",
-                "message": "An unexpected error occurred. Please try again later."
-            }
+                "message": "An unexpected error occurred. Please try again later.",
+            },
         )

@@ -1,9 +1,10 @@
 """Application configuration management."""
 
 import os
-from typing import List, Optional
 from functools import lru_cache
-from pydantic import Field, field_validator, ConfigDict
+from typing import List, Optional
+
+from pydantic import ConfigDict, Field, field_validator
 from pydantic_settings import BaseSettings
 
 
@@ -25,6 +26,7 @@ def _get_env_files() -> List[str]:
         env_files.append(".env")
 
     return env_files
+
 
 class Settings(BaseSettings):
     """Application settings with validation and type safety."""
@@ -59,9 +61,7 @@ class Settings(BaseSettings):
     UPLOAD_DIR: str = Field(default="uploads")
 
     # Audio processing settings (stored as comma-separated string, parsed to list)
-    SUPPORTED_AUDIO_FORMATS: str = Field(
-        default="mp3,wav,m4a,ogg,flac"
-    )
+    SUPPORTED_AUDIO_FORMATS: str = Field(default="mp3,wav,m4a,ogg,flac")
 
     # Rate limiting
     RATE_LIMIT_REQUESTS: int = Field(default=100)
@@ -77,7 +77,7 @@ class Settings(BaseSettings):
         env_file=_get_env_files(),
         env_file_encoding="utf-8",
         case_sensitive=True,
-        validate_assignment=True
+        validate_assignment=True,
     )
 
     @field_validator("DATABASE_URL")
@@ -99,9 +99,12 @@ class Settings(BaseSettings):
         """Validate secret key strength."""
         # Allow shorter keys in test environment
         import os
+
         if os.getenv("ENVIRONMENT", "").lower() in ("test", "testing"):
             if len(v) < 8:
-                raise ValueError("SECRET_KEY must be at least 8 characters long in test environment")
+                raise ValueError(
+                    "SECRET_KEY must be at least 8 characters long in test environment"
+                )
         else:
             if len(v) < 32:
                 raise ValueError("SECRET_KEY must be at least 32 characters long")
@@ -144,6 +147,7 @@ class Settings(BaseSettings):
     def supported_audio_formats_list(self) -> List[str]:
         """Get SUPPORTED_AUDIO_FORMATS as a list."""
         return [item.strip() for item in self.SUPPORTED_AUDIO_FORMATS.split(",") if item.strip()]
+
 
 @lru_cache()
 def get_settings() -> Settings:

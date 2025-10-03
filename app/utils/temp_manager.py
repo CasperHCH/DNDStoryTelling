@@ -6,26 +6,28 @@ across the entire application, preventing the creation of multiple temp director
 and ensuring proper cleanup.
 """
 
-import tempfile
-import shutil
 import atexit
+import logging
+import shutil
+import tempfile
 import threading
 import time
-from pathlib import Path
-from typing import Optional, List, Dict, Any
 from contextlib import contextmanager
+from pathlib import Path
+from typing import Any, Dict, List, Optional
+
 from app.config import get_settings
-import logging
 
 logger = logging.getLogger(__name__)
+
 
 class TempFileManager:
     """Centralized manager for temporary files and directories."""
 
-    _instance: Optional['TempFileManager'] = None
+    _instance: Optional["TempFileManager"] = None
     _lock = threading.Lock()
 
-    def __new__(cls) -> 'TempFileManager':
+    def __new__(cls) -> "TempFileManager":
         """Singleton pattern to ensure only one temp manager exists."""
         if cls._instance is None:
             with cls._lock:
@@ -35,7 +37,7 @@ class TempFileManager:
 
     def __init__(self):
         """Initialize the temp file manager."""
-        if hasattr(self, '_initialized'):
+        if hasattr(self, "_initialized"):
             return
 
         self._initialized = True
@@ -66,9 +68,7 @@ class TempFileManager:
         """Start the background cleanup thread."""
         if self._cleanup_thread is None or not self._cleanup_thread.is_alive():
             self._cleanup_thread = threading.Thread(
-                target=self._cleanup_worker,
-                daemon=True,
-                name="TempFileCleanup"
+                target=self._cleanup_worker, daemon=True, name="TempFileCleanup"
             )
             self._cleanup_thread.start()
 
@@ -85,7 +85,7 @@ class TempFileManager:
         suffix: str = "",
         prefix: str = "tmp",
         directory: Optional[str] = None,
-        delete_on_exit: bool = True
+        delete_on_exit: bool = True,
     ) -> Path:
         """
         Create a temporary file in the centralized temp directory.
@@ -106,35 +106,27 @@ class TempFileManager:
             target_dir = self._temp_dir
 
         # Create the temporary file
-        fd, temp_path = tempfile.mkstemp(
-            suffix=suffix,
-            prefix=prefix,
-            dir=str(target_dir)
-        )
+        fd, temp_path = tempfile.mkstemp(suffix=suffix, prefix=prefix, dir=str(target_dir))
 
         # Close the file descriptor since we just need the path
         import os
+
         os.close(fd)
 
         temp_path_obj = Path(temp_path)
 
         # Track the file
         self._temp_files[str(temp_path_obj)] = {
-            'created_at': time.time(),
-            'delete_on_exit': delete_on_exit,
-            'directory': directory
+            "created_at": time.time(),
+            "delete_on_exit": delete_on_exit,
+            "directory": directory,
         }
 
         logger.debug(f"Created temp file: {temp_path_obj}")
         return temp_path_obj
 
     @contextmanager
-    def temp_file(
-        self,
-        suffix: str = "",
-        prefix: str = "tmp",
-        directory: Optional[str] = None
-    ):
+    def temp_file(self, suffix: str = "", prefix: str = "tmp", directory: Optional[str] = None):
         """
         Context manager for temporary files that are automatically cleaned up.
 
@@ -147,10 +139,7 @@ class TempFileManager:
             Path to the temporary file
         """
         temp_path = self.create_temp_file(
-            suffix=suffix,
-            prefix=prefix,
-            directory=directory,
-            delete_on_exit=False
+            suffix=suffix, prefix=prefix, directory=directory, delete_on_exit=False
         )
 
         try:
@@ -159,10 +148,7 @@ class TempFileManager:
             self.delete_temp_file(temp_path)
 
     def create_temp_directory(
-        self,
-        suffix: str = "",
-        prefix: str = "tmp",
-        parent_directory: Optional[str] = None
+        self, suffix: str = "", prefix: str = "tmp", parent_directory: Optional[str] = None
     ) -> Path:
         """
         Create a temporary directory in the centralized temp area.
@@ -181,18 +167,14 @@ class TempFileManager:
         else:
             target_dir = self._temp_dir
 
-        temp_dir = Path(tempfile.mkdtemp(
-            suffix=suffix,
-            prefix=prefix,
-            dir=str(target_dir)
-        ))
+        temp_dir = Path(tempfile.mkdtemp(suffix=suffix, prefix=prefix, dir=str(target_dir)))
 
         # Track the directory
         self._temp_files[str(temp_dir)] = {
-            'created_at': time.time(),
-            'delete_on_exit': True,
-            'is_directory': True,
-            'directory': parent_directory
+            "created_at": time.time(),
+            "delete_on_exit": True,
+            "is_directory": True,
+            "directory": parent_directory,
         }
 
         logger.debug(f"Created temp directory: {temp_dir}")
@@ -200,10 +182,7 @@ class TempFileManager:
 
     @contextmanager
     def temp_directory(
-        self,
-        suffix: str = "",
-        prefix: str = "tmp",
-        parent_directory: Optional[str] = None
+        self, suffix: str = "", prefix: str = "tmp", parent_directory: Optional[str] = None
     ):
         """
         Context manager for temporary directories that are automatically cleaned up.
@@ -217,9 +196,7 @@ class TempFileManager:
             Path to the temporary directory
         """
         temp_dir = self.create_temp_directory(
-            suffix=suffix,
-            prefix=prefix,
-            parent_directory=parent_directory
+            suffix=suffix, prefix=prefix, parent_directory=parent_directory
         )
 
         try:
@@ -266,7 +243,7 @@ class TempFileManager:
         # Clean tracked files
         files_to_remove = []
         for file_path, info in self._temp_files.items():
-            file_age = current_time - info['created_at']
+            file_age = current_time - info["created_at"]
             if file_age > max_age_seconds:
                 files_to_remove.append(file_path)
 
@@ -326,28 +303,28 @@ class TempFileManager:
         """Get statistics about current temporary files."""
         current_time = time.time()
         stats = {
-            'total_files': len(self._temp_files),
-            'temp_directory': str(self._temp_dir),
-            'files_by_age': {'<1min': 0, '1min-1hr': 0, '>1hr': 0},
-            'files_by_type': {'files': 0, 'directories': 0}
+            "total_files": len(self._temp_files),
+            "temp_directory": str(self._temp_dir),
+            "files_by_age": {"<1min": 0, "1min-1hr": 0, ">1hr": 0},
+            "files_by_type": {"files": 0, "directories": 0},
         }
 
         for file_path, info in self._temp_files.items():
-            age = current_time - info['created_at']
+            age = current_time - info["created_at"]
 
             # Age categorization
             if age < 60:
-                stats['files_by_age']['<1min'] += 1
+                stats["files_by_age"]["<1min"] += 1
             elif age < 3600:
-                stats['files_by_age']['1min-1hr'] += 1
+                stats["files_by_age"]["1min-1hr"] += 1
             else:
-                stats['files_by_age']['>1hr'] += 1
+                stats["files_by_age"][">1hr"] += 1
 
             # Type categorization
-            if info.get('is_directory', False):
-                stats['files_by_type']['directories'] += 1
+            if info.get("is_directory", False):
+                stats["files_by_type"]["directories"] += 1
             else:
-                stats['files_by_type']['files'] += 1
+                stats["files_by_type"]["files"] += 1
 
         return stats
 
@@ -355,47 +332,44 @@ class TempFileManager:
 # Global instance
 _temp_manager = TempFileManager()
 
+
 # Convenience functions for easy access
 def create_temp_file(
     suffix: str = "",
     prefix: str = "tmp",
     directory: Optional[str] = None,
-    delete_on_exit: bool = True
+    delete_on_exit: bool = True,
 ) -> Path:
     """Create a temporary file. See TempFileManager.create_temp_file for details."""
     return _temp_manager.create_temp_file(suffix, prefix, directory, delete_on_exit)
 
-def temp_file(
-    suffix: str = "",
-    prefix: str = "tmp",
-    directory: Optional[str] = None
-):
+
+def temp_file(suffix: str = "", prefix: str = "tmp", directory: Optional[str] = None):
     """Context manager for temporary files. See TempFileManager.temp_file for details."""
     return _temp_manager.temp_file(suffix, prefix, directory)
 
+
 def create_temp_directory(
-    suffix: str = "",
-    prefix: str = "tmp",
-    parent_directory: Optional[str] = None
+    suffix: str = "", prefix: str = "tmp", parent_directory: Optional[str] = None
 ) -> Path:
     """Create a temporary directory. See TempFileManager.create_temp_directory for details."""
     return _temp_manager.create_temp_directory(suffix, prefix, parent_directory)
 
-def temp_directory(
-    suffix: str = "",
-    prefix: str = "tmp",
-    parent_directory: Optional[str] = None
-):
+
+def temp_directory(suffix: str = "", prefix: str = "tmp", parent_directory: Optional[str] = None):
     """Context manager for temporary directories. See TempFileManager.temp_directory for details."""
     return _temp_manager.temp_directory(suffix, prefix, parent_directory)
+
 
 def cleanup_old_temp_files(max_age_seconds: int = 3600):
     """Clean up old temporary files. See TempFileManager.cleanup_old_files for details."""
     return _temp_manager.cleanup_old_files(max_age_seconds)
 
+
 def get_temp_stats() -> Dict[str, Any]:
     """Get temporary file statistics. See TempFileManager.get_stats for details."""
     return _temp_manager.get_stats()
+
 
 def get_temp_directory() -> Path:
     """Get the centralized temporary directory path."""

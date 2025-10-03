@@ -2,12 +2,14 @@
 Security middleware for the DNDStoryTelling application.
 """
 
+import logging
+
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import Response as StarletteResponse
-import logging
 
 logger = logging.getLogger(__name__)
+
 
 class SecurityHeadersMiddleware(BaseHTTPMiddleware):
     """Add security headers to all responses."""
@@ -47,6 +49,7 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
             )
 
         return response
+
 
 class RequestLoggingMiddleware(BaseHTTPMiddleware):
     """Log requests for monitoring and debugging."""

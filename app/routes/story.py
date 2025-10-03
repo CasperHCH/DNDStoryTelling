@@ -1,23 +1,27 @@
-from fastapi import APIRouter, File, UploadFile, Depends, HTTPException
-from sqlalchemy.orm import Session
-from app.services.audio_processor import AudioProcessor
-from app.services.story_generator import StoryGenerator
-from app.models.database import get_db
-from app.models.user import User
-from app.auth.auth_handler import get_current_user
-from app.utils.temp_manager import temp_file
 import os
 
-router = APIRouter(prefix="/story", tags=["story"])
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
+from sqlalchemy.orm import Session
+
+from app.auth.auth_handler import get_current_user
+from app.models.database import get_db
+from app.models.user import User
+from app.services.audio_processor import AudioProcessor
+from app.services.story_generator import StoryGenerator
+from app.utils.temp_manager import temp_file
+
+router = APIRouter(tags=["story"])
+
 
 @router.post("/upload")
 async def upload_file(
     file: UploadFile,
     context: dict,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
 ):
     import logging
+
     logger = logging.getLogger(__name__)
 
     try:
@@ -43,17 +47,17 @@ async def upload_file(
 
         # Use centralized temp file management for uploaded files
         with temp_file(suffix=f"_{file.filename}", directory="uploads") as temp_path:
-            with open(temp_path, 'wb') as f:
+            with open(temp_path, "wb") as f:
                 f.write(content)
 
             # Process audio to text if it's an audio file
-            if file.content_type and file.content_type.startswith('audio/'):
+            if file.content_type and file.content_type.startswith("audio/"):
                 logger.info("Processing audio file for transcription")
                 text = await audio_processor.process_audio(str(temp_path))
             else:
                 logger.info("Processing text file")
                 try:
-                    text = content.decode('utf-8')
+                    text = content.decode("utf-8")
                 except UnicodeDecodeError:
                     raise HTTPException(status_code=400, detail="Invalid text file encoding")
 

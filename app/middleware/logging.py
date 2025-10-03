@@ -1,12 +1,14 @@
 """Logging middleware for the D&D Story Telling application."""
 
-import time
 import logging
+import time
 from typing import Callable
-from fastapi import Request, Response
 from uuid import uuid4
 
+from fastapi import Request, Response
+
 logger = logging.getLogger(__name__)
+
 
 async def logging_middleware(request: Request, call_next: Callable) -> Response:
     """Request/response logging middleware."""
@@ -29,10 +31,7 @@ async def logging_middleware(request: Request, call_next: Callable) -> Response:
 
         # Log response details
         process_time = time.time() - start_time
-        logger.info(
-            f"[{request_id}] {response.status_code} - "
-            f"Processed in {process_time:.3f}s"
-        )
+        logger.info(f"[{request_id}] {response.status_code} - " f"Processed in {process_time:.3f}s")
 
         # Add request ID to response headers for tracing
         response.headers["X-Request-ID"] = request_id

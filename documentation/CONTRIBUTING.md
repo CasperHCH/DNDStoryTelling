@@ -350,26 +350,32 @@ from app.services.story_generator import StoryGenerator
 
 @pytest.mark.asyncio
 async def test_generate_story_success():
-    \"\"\"Test successful story generation.\"\"\"
+    \"\"\"Test successful story generation with modern OpenAI API.\"\"\"
     generator = StoryGenerator()
 
-    with patch('openai.ChatCompletion.acreate') as mock_openai:
-        mock_openai.return_value = {
-            'choices': [{'message': {'content': 'Generated story'}}]
-        }
+    with patch('openai.AsyncOpenAI') as mock_openai_class:
+        mock_client = AsyncMock()
+        mock_openai_class.return_value = mock_client
+
+        mock_response = AsyncMock()
+        mock_response.choices = [AsyncMock()]
+        mock_response.choices[0].message.content = "Generated story"
+        mock_client.chat.completions.create.return_value = mock_response
 
         result = await generator.generate_story("Test input")
 
         assert result == "Generated story"
-        mock_openai.assert_called_once()
+        mock_client.chat.completions.create.assert_called_once()
 
 @pytest.mark.asyncio
 async def test_generate_story_api_error():
-    \"\"\"Test story generation with API error.\"\"\"
+    \"\"\"Test story generation with API error using modern OpenAI API.\"\"\"
     generator = StoryGenerator()
 
-    with patch('openai.ChatCompletion.acreate') as mock_openai:
-        mock_openai.side_effect = Exception("API Error")
+    with patch('openai.AsyncOpenAI') as mock_openai_class:
+        mock_client = AsyncMock()
+        mock_openai_class.return_value = mock_client
+        mock_client.chat.completions.create.side_effect = Exception("API Error")
 
         with pytest.raises(Exception, match="API Error"):
             await generator.generate_story("Test input")

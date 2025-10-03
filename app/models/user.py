@@ -1,10 +1,12 @@
 """User model for authentication and user management."""
 
 from datetime import datetime
-from sqlalchemy import Column, Integer, String, DateTime, Boolean, Text
+
+from sqlalchemy import Boolean, Column, DateTime, Integer, String, Text
 from sqlalchemy.sql import func
 
 from .database import Base
+
 
 class User(Base):
     """User model for storing user authentication and profile data."""
@@ -51,7 +53,5 @@ class User(Base):
     def has_confluence_config(self) -> bool:
         """Check if user has Confluence configuration."""
         return bool(
-            self.confluence_api_token
-            and self.confluence_url
-            and self.confluence_parent_page_id
+            self.confluence_api_token and self.confluence_url and self.confluence_parent_page_id
         )

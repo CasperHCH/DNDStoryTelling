@@ -2,14 +2,16 @@
 
 import logging
 from typing import AsyncGenerator
+
 from sqlalchemy import create_engine, text
-from sqlalchemy.orm import sessionmaker, declarative_base
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, AsyncEngine
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
+from sqlalchemy.orm import declarative_base, sessionmaker
 from sqlalchemy.pool import NullPool
 
 from app.config import get_settings
 
 logger = logging.getLogger(__name__)
+
 
 def _get_database_config():
     """Get database configuration lazily."""
@@ -26,6 +28,7 @@ def _get_database_config():
         database_url = database_url.replace("sqlite://", "sqlite+aiosqlite://")
 
     return database_url, settings
+
 
 # Initialize database configuration lazily
 DATABASE_URL, settings = _get_database_config()
@@ -58,6 +61,7 @@ SessionLocal = sessionmaker(
 
 Base = declarative_base()
 
+
 async def init_db() -> None:
     """Initialize database tables and run health check."""
     try:
@@ -74,6 +78,7 @@ async def init_db() -> None:
         logger.error(f"Failed to initialize database: {e}")
         raise
 
+
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
     """Dependency to get database session."""
     async with SessionLocal() as session:
@@ -85,6 +90,7 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
             raise
         finally:
             await session.close()
+
 
 async def health_check_db() -> bool:
     """Check database health."""
