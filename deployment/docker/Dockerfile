@@ -34,7 +34,7 @@ COPY testing/test-requirements.txt ./testing/
 RUN pip install -r requirements.txt \
     && pip install -r testing/test-requirements.txt \
     && pip install playwright ffmpeg-python asyncpg \
-    && playwright install --with-deps \
+    && playwright install chromium --with-deps \
     && rm -rf /root/.cache/pip
 
 # Copy application code

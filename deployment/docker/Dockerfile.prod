@@ -54,7 +54,7 @@ COPY . .
 COPY --chown=appuser:appuser app/ ./app/
 COPY --chown=appuser:appuser alembic/ ./alembic/
 COPY --chown=appuser:appuser alembic.ini ./
-COPY --chown=appuser:appuser deployment/docker/wait-for-it.sh ./
+COPY --chown=appuser:appuser deployment/docker/wait-for-it.sh ./wait-for-it.sh
 
 # Create necessary directories with proper permissions
 RUN mkdir -p /app/uploads /app/logs /app/temp /app/static /app/templates \
