@@ -58,7 +58,7 @@ jobs:
         CONFLUENCE_API_TOKEN: ${{ secrets.CONFLUENCE_API_TOKEN }}
         CONFLUENCE_URL: ${{ secrets.CONFLUENCE_URL }}
       run: |
-        pytest --cov=app --cov-report=xml --cov-report=html --ignore=tests/ui/
+        python -m pytest testing/tests/ --cov=app --cov-report=xml --cov-report=html --ignore=testing/tests/ui/ -v
 
     - name: Upload coverage reports as artifact
       uses: actions/upload-artifact@v4

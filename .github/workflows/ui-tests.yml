@@ -121,7 +121,7 @@ jobs:
       run: |
         # Create test-results directory for Playwright outputs
         mkdir -p test-results
-        pytest tests/ui/ -v --html=ui-test-report.html --self-contained-html || echo "UI tests completed with issues"
+        pytest testing/tests/ui/ -v --html=ui-test-report.html --self-contained-html || echo "UI tests completed with issues"
 
     - name: Upload UI test artifacts
       if: always()
