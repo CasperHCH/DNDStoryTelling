@@ -94,17 +94,23 @@ class TestAudioProcessorIntegration:
         assert processing_time < 60  # Should process small files quickly
 
     @pytest.mark.performance
-    @pytest.mark.benchmark
-    def test_audio_processing_performance(self, processor, test_audio_file, benchmark):
-        """Benchmark audio processing performance."""
+    @pytest.mark.asyncio
+    async def test_audio_processing_performance(self, processor, test_audio_file):
+        """Test audio processing performance without benchmark complications."""
         if not os.path.exists(test_audio_file):
             pytest.skip("Test audio file not available")
 
-        async def process_audio():
-            return await processor.process_audio(test_audio_file)
+        import time
+        start_time = time.time()
+        result = await processor.process_audio(test_audio_file)
+        processing_time = time.time() - start_time
 
-        result = benchmark(asyncio.run, process_audio())
         assert result["processing_successful"] is True
+
+        # Basic performance check - should complete within reasonable time
+        assert processing_time < 60, f"Processing took too long: {processing_time:.2f}s"
+
+        print(f"Audio processing completed in {processing_time:.2f} seconds")
 
 
 class TestRealDnDAudioIntegration:
@@ -240,6 +246,10 @@ class TestRealDnDAudioIntegration:
             pytest.skip("No D&D audio files available")
 
         test_file = test_files[0]
+
+        # Skip files that are too large for testing
+        if test_file.stat().st_size > 50 * 1024 * 1024:  # 50MB limit
+            pytest.skip(f"Test file too large: {test_file.stat().st_size} bytes")
         result = await processor.process_audio(str(test_file))
 
         if not result["processing_successful"]:

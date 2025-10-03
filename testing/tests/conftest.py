@@ -44,7 +44,20 @@ def engine():
     # Use synchronous SQLite for test database operations
     sync_test_url = "sqlite:///test.db"
     engine = create_engine(sync_test_url)
+
+    # Create all tables using SQLAlchemy metadata
     Base.metadata.create_all(bind=engine)
+
+    # Also try to run Alembic migrations to ensure all tables exist
+    try:
+        from alembic.config import Config
+        from alembic import command
+        alembic_cfg = Config("alembic.ini")
+        command.upgrade(alembic_cfg, "head")
+    except Exception as e:
+        # If Alembic fails, continue with SQLAlchemy metadata creation
+        print(f"Alembic migration failed, using SQLAlchemy metadata: {e}")
+
     yield engine
     Base.metadata.drop_all(bind=engine)
 

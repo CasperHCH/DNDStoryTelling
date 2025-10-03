@@ -42,9 +42,14 @@ class AudioProcessor:
 
     def validate_audio_file(self, file_path: Path) -> None:
         """Validate audio file format and size."""
-        if not file_path.exists():
-            raise AudioProcessingError(f"Audio file not found: {file_path}")
+        # First perform security validation
+        try:
+            from app.utils.security import InputValidator
+            InputValidator.validate_audio_file_path(file_path)
+        except Exception as e:
+            raise AudioProcessingError(f"Security validation failed: {e}")
 
+        # Then perform audio-specific validation
         file_size = file_path.stat().st_size
         if file_size > get_settings().MAX_FILE_SIZE:
             raise AudioProcessingError(
@@ -98,12 +103,21 @@ class AudioProcessor:
             if normalized_path != file_path:
                 normalized_path.unlink(missing_ok=True)
 
+            # Calculate overall confidence from segments
+            segments = result.get("segments", [])
+            overall_confidence = 0.0
+            if segments:
+                confidences = [seg.get("confidence", 0.0) for seg in segments if "confidence" in seg]
+                overall_confidence = sum(confidences) / len(confidences) if confidences else 0.0
+
             return {
                 "text": result["text"].strip(),
                 "language": result.get("language", "unknown"),
-                "segments": result.get("segments", []),
+                "segments": segments,
+                "confidence": overall_confidence,
                 "duration": self._get_audio_duration(file_path),
                 "file_size": file_path.stat().st_size,
+                "processing_time": result.get("processing_time", 0.0),
                 "processing_successful": True
             }
 

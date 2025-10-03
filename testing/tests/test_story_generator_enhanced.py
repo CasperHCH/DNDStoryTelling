@@ -131,7 +131,7 @@ class TestStoryGeneratorIntegration:
 
         try:
             result = await generator.generate_story(
-                transcription=dnd_transcription,
+                text=dnd_transcription,
                 context=sample_context
             )
 
@@ -177,7 +177,7 @@ class TestStoryGeneratorIntegration:
         """Test story quality assessment metrics."""
         try:
             result = await generator.generate_story(
-                transcription=dnd_transcription,
+                text=dnd_transcription,
                 context=sample_context
             )
 
@@ -273,15 +273,21 @@ class TestStoryGeneratorPerformance:
 
         sample_transcription = "DM: You see a dragon. Player: I attack with my sword."
 
-        async def generate_story():
-            try:
-                return await generator.generate_story(sample_transcription, sample_context)
-            except Exception as e:
-                if "api key" in str(e).lower():
-                    pytest.skip("OpenAI API not available")
-                raise
+        # Skip benchmark test due to event loop conflicts in async test environment
+        # Instead, do a simple performance timing
+        import time
 
-        result = benchmark(asyncio.run, generate_story())
+        start_time = time.time()
+        try:
+            result = await generator.generate_story(sample_transcription, sample_context)
+        except Exception as e:
+            if "api key" in str(e).lower():
+                pytest.skip("OpenAI API not available")
+            raise
+
+        end_time = time.time()
+        duration = end_time - start_time
+        print(f"Story generation took {duration:.2f} seconds")
         if result:  # Only assert if we got a result (API was available)
             assert result.narrative is not None
 
