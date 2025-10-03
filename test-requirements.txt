@@ -1,0 +1,40 @@
+# Testing Dependencies
+pytest==7.4.3
+pytest-asyncio==0.21.1
+pytest-cov==4.1.0
+pytest-mock==3.11.1
+pytest-html==3.2.0
+pytest-benchmark==4.0.0     # Performance benchmarking
+hypothesis==6.90.0           # Property-based testing
+pytest-xdist==3.3.1          # Parallel test execution
+pytest-timeout==2.2.0        # Test timeout management
+
+# Code Quality & Security
+black==23.10.1
+isort==5.12.0
+flake8==6.1.0
+mypy==1.7.0
+bandit==1.7.5               # Security linting
+safety==3.0.1               # Dependency security scanning
+
+# Database drivers for testing
+psycopg2-binary==2.9.7      # For synchronous PostgreSQL operations in tests
+aiosqlite==0.19.0           # For SQLite fallback in tests
+
+# Test utilities
+httpx==0.25.0               # For async HTTP client testing
+factory-boy==3.3.0          # For test data generation
+freezegun==1.2.2            # For time-based testing
+faker==20.1.0               # Test data generation
+
+# Performance & Monitoring
+py-spy==0.3.14              # Python profiler
+memory-profiler==0.61.0     # Memory usage profiling
+
+# Audio Testing
+librosa==0.10.1             # Audio analysis for testing
+scipy==1.11.4               # Scientific computing for audio tests
+
+# UI Testing
+playwright==1.39.0
+pytest-playwright==0.4.3
