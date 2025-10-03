@@ -75,20 +75,20 @@ class TestStoryUpload:
     async def test_upload_text_file_success(self, mock_db, mock_auth, mock_audio_proc_class, mock_story_gen_class, mock_user, sample_text_file):
         """Test successful text file upload and story generation."""
         from app.routes.story import upload_file
-        
+
         # Setup mocks
         mock_auth.return_value = mock_user
         mock_db.return_value = MagicMock()
-        
+
         mock_story_gen = AsyncMock()
         mock_story_gen.generate_story = AsyncMock(return_value="Generated story content")
         mock_story_gen_class.return_value = mock_story_gen
-        
+
         mock_audio_proc = AsyncMock()
         mock_audio_proc_class.return_value = mock_audio_proc
-        
+
         context = {"tone": "heroic", "setting": "fantasy"}
-        
+
         # Execute
         result = await upload_file(
             file=sample_text_file,
@@ -96,7 +96,7 @@ class TestStoryUpload:
             db=mock_db.return_value,
             current_user=mock_user
         )
-        
+
         # Verify
         assert result == {"story": "Generated story content"}
         mock_story_gen.generate_story.assert_called_once_with("This is test content for story generation.", context)
@@ -109,21 +109,21 @@ class TestStoryUpload:
     async def test_upload_audio_file_success(self, mock_db, mock_auth, mock_audio_proc_class, mock_story_gen_class, mock_user, sample_audio_file):
         """Test successful audio file upload and story generation."""
         from app.routes.story import upload_file
-        
+
         # Setup mocks
         mock_auth.return_value = mock_user
         mock_db.return_value = MagicMock()
-        
+
         mock_story_gen = AsyncMock()
         mock_story_gen.generate_story = AsyncMock(return_value="Story from audio")
         mock_story_gen_class.return_value = mock_story_gen
-        
+
         mock_audio_proc = AsyncMock()
         mock_audio_proc.process_audio = AsyncMock(return_value="Transcribed text from audio")
         mock_audio_proc_class.return_value = mock_audio_proc
-        
+
         context = {"tone": "dramatic"}
-        
+
         # Execute
         result = await upload_file(
             file=sample_audio_file,
@@ -131,7 +131,7 @@ class TestStoryUpload:
             db=mock_db.return_value,
             current_user=mock_user
         )
-        
+
         # Verify
         assert result == {"story": "Story from audio"}
         mock_audio_proc.process_audio.assert_called_once()
@@ -143,10 +143,10 @@ class TestStoryUpload:
     async def test_upload_no_openai_key(self, mock_db, mock_auth, mock_user_no_key, sample_text_file):
         """Test upload fails when user has no OpenAI API key."""
         from app.routes.story import upload_file
-        
+
         mock_auth.return_value = mock_user_no_key
         mock_db.return_value = MagicMock()
-        
+
         # Execute and verify
         with pytest.raises(HTTPException) as exc_info:
             await upload_file(
@@ -155,7 +155,7 @@ class TestStoryUpload:
                 db=mock_db.return_value,
                 current_user=mock_user_no_key
             )
-        
+
         assert exc_info.value.status_code == 400
         assert "OpenAI API key not configured" in exc_info.value.detail
 
@@ -165,17 +165,17 @@ class TestStoryUpload:
     async def test_upload_no_filename(self, mock_db, mock_auth, mock_user):
         """Test upload fails when no filename provided."""
         from app.routes.story import upload_file
-        
+
         mock_auth.return_value = mock_user
         mock_db.return_value = MagicMock()
-        
+
         # Create file with no filename
         file = UploadFile(
             filename=None,
             file=BytesIO(b"content"),
             size=7
         )
-        
+
         # Execute and verify
         with pytest.raises(HTTPException) as exc_info:
             await upload_file(
@@ -184,7 +184,7 @@ class TestStoryUpload:
                 db=mock_db.return_value,
                 current_user=mock_user
             )
-        
+
         assert exc_info.value.status_code == 400
         assert "No file provided" in exc_info.value.detail
 
@@ -194,10 +194,10 @@ class TestStoryUpload:
     async def test_upload_file_too_large(self, mock_db, mock_auth, mock_user, large_file):
         """Test upload fails when file is too large."""
         from app.routes.story import upload_file
-        
+
         mock_auth.return_value = mock_user
         mock_db.return_value = MagicMock()
-        
+
         # Execute and verify
         with pytest.raises(HTTPException) as exc_info:
             await upload_file(
@@ -206,7 +206,7 @@ class TestStoryUpload:
                 db=mock_db.return_value,
                 current_user=mock_user
             )
-        
+
         assert exc_info.value.status_code == 413
         assert "File too large" in exc_info.value.detail
 
@@ -218,14 +218,14 @@ class TestStoryUpload:
     async def test_upload_invalid_text_encoding(self, mock_db, mock_auth, mock_audio_proc_class, mock_story_gen_class, mock_user):
         """Test upload fails with invalid text file encoding."""
         from app.routes.story import upload_file
-        
+
         # Setup mocks
         mock_auth.return_value = mock_user
         mock_db.return_value = MagicMock()
-        
+
         mock_story_gen_class.return_value = AsyncMock()
         mock_audio_proc_class.return_value = AsyncMock()
-        
+
         # Create file with invalid encoding
         invalid_content = b'\xff\xfe\x00\x00invalid_utf8'
         file = UploadFile(
@@ -234,7 +234,7 @@ class TestStoryUpload:
             size=len(invalid_content),
             headers={"content-type": "text/plain"}
         )
-        
+
         # Execute and verify
         with pytest.raises(HTTPException) as exc_info:
             await upload_file(
@@ -243,7 +243,7 @@ class TestStoryUpload:
                 db=mock_db.return_value,
                 current_user=mock_user
             )
-        
+
         assert exc_info.value.status_code == 400
         assert "Invalid text file encoding" in exc_info.value.detail
 
@@ -255,19 +255,19 @@ class TestStoryUpload:
     async def test_upload_story_generation_fails(self, mock_db, mock_auth, mock_audio_proc_class, mock_story_gen_class, mock_user, sample_text_file):
         """Test upload handles story generation failure."""
         from app.routes.story import upload_file
-        
+
         # Setup mocks
         mock_auth.return_value = mock_user
         mock_db.return_value = MagicMock()
-        
+
         mock_story_gen = AsyncMock()
         mock_story_gen.generate_story = AsyncMock(side_effect=Exception("Story generation failed"))
         mock_story_gen_class.return_value = mock_story_gen
-        
+
         mock_audio_proc_class.return_value = AsyncMock()
-        
+
         context = {"tone": "heroic"}
-        
+
         # Execute and verify
         with pytest.raises(HTTPException) as exc_info:
             await upload_file(
@@ -276,7 +276,7 @@ class TestStoryUpload:
                 db=mock_db.return_value,
                 current_user=mock_user
             )
-        
+
         assert exc_info.value.status_code == 500
         assert "Internal server error" in exc_info.value.detail
 
@@ -288,19 +288,19 @@ class TestStoryUpload:
     async def test_upload_audio_processing_fails(self, mock_db, mock_auth, mock_audio_proc_class, mock_story_gen_class, mock_user, sample_audio_file):
         """Test upload handles audio processing failure."""
         from app.routes.story import upload_file
-        
+
         # Setup mocks
         mock_auth.return_value = mock_user
         mock_db.return_value = MagicMock()
-        
+
         mock_story_gen_class.return_value = AsyncMock()
-        
+
         mock_audio_proc = AsyncMock()
         mock_audio_proc.process_audio = AsyncMock(side_effect=Exception("Audio processing failed"))
         mock_audio_proc_class.return_value = mock_audio_proc
-        
+
         context = {"tone": "dramatic"}
-        
+
         # Execute and verify
         with pytest.raises(HTTPException) as exc_info:
             await upload_file(
@@ -309,6 +309,6 @@ class TestStoryUpload:
                 db=mock_db.return_value,
                 current_user=mock_user
             )
-        
+
         assert exc_info.value.status_code == 500
         assert "Internal server error" in exc_info.value.detail

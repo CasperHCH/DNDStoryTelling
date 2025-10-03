@@ -20,7 +20,7 @@ with warnings.catch_warnings():
             sys.modules['whisper'] = type(sys)('whisper')
             whisper = sys.modules['whisper']
             whisper.load_model = lambda x: None
-    
+
     from pydub import AudioSegment
     from pydub.exceptions import CouldntDecodeError
 

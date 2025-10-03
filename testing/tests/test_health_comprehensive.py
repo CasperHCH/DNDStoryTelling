@@ -47,7 +47,7 @@ class TestHealthRoutes:
     def test_basic_health_check(self, client):
         """Test basic health check endpoint."""
         response = client.get("/health")  # Remove trailing slash
-        
+
         assert response.status_code == 200
         data = response.json()
         assert data["status"] == "healthy"
@@ -59,9 +59,9 @@ class TestHealthRoutes:
         """Test detailed health check when system is healthy."""
         mock_health.run_health_checks = mock_health_checker.run_health_checks
         mock_perf.get_performance_summary = mock_performance_metrics.get_performance_summary
-        
+
         response = client.get("/health/detailed")
-        
+
         assert response.status_code == 200
         data = response.json()
         assert data["status"] == "healthy"
@@ -81,12 +81,12 @@ class TestHealthRoutes:
             "critical_failures": ["database"],
             "check_time": "2025-10-03T12:00:00Z"
         })
-        
+
         mock_health.run_health_checks = mock_health_checker.run_health_checks
         mock_perf.get_performance_summary = mock_performance_metrics.get_performance_summary
-        
+
         response = client.get("/health/detailed")
-        
+
         assert response.status_code == 503
         data = response.json()
         assert data["status"] == "critical"
@@ -101,12 +101,12 @@ class TestHealthRoutes:
             "critical_failures": [],
             "check_time": "2025-10-03T12:00:00Z"
         })
-        
+
         mock_health.run_health_checks = mock_health_checker.run_health_checks
         mock_perf.get_performance_summary = mock_performance_metrics.get_performance_summary
-        
+
         response = client.get("/health/detailed")
-        
+
         assert response.status_code == 200
         data = response.json()
         assert data["status"] == "degraded"
@@ -115,9 +115,9 @@ class TestHealthRoutes:
     def test_detailed_health_check_exception(self, mock_health, client):
         """Test detailed health check handles exceptions."""
         mock_health.run_health_checks = AsyncMock(side_effect=Exception("Health check failed"))
-        
+
         response = client.get("/health/detailed")
-        
+
         assert response.status_code == 500
         data = response.json()
         assert data["status"] == "error"
@@ -127,9 +127,9 @@ class TestHealthRoutes:
     def test_get_metrics_success(self, mock_perf, client, mock_performance_metrics):
         """Test successful metrics retrieval."""
         mock_perf.return_value = mock_performance_metrics
-        
+
         response = client.get("/health/metrics")
-        
+
         assert response.status_code == 200
         data = response.json()
         assert "uptime_hours" in data
@@ -140,18 +140,18 @@ class TestHealthRoutes:
     def test_get_metrics_exception(self, mock_perf, client):
         """Test metrics retrieval handles exceptions."""
         mock_perf.get_performance_summary.side_effect = Exception("Metrics failed")
-        
+
         response = client.get("/health/metrics")
-        
+
         assert response.status_code == 500
 
     @patch('app.routes.health.performance_metrics')
     def test_get_function_metrics_success(self, mock_perf, client, mock_performance_metrics):
         """Test successful function metrics retrieval."""
         mock_perf.return_value = mock_performance_metrics
-        
+
         response = client.get("/health/metrics/function/test_function")
-        
+
         assert response.status_code == 200
         data = response.json()
         assert data["function_name"] == "test_function"
@@ -166,9 +166,9 @@ class TestHealthRoutes:
         mock_perf_instance.get_function_stats.return_value = {}
         mock_perf_instance.get_recent_durations.return_value = []
         mock_perf.return_value = mock_perf_instance
-        
+
         response = client.get("/health/metrics/function/empty_function")
-        
+
         assert response.status_code == 200
         data = response.json()
         assert data["recent_performance"]["sample_count"] == 0
@@ -178,9 +178,9 @@ class TestHealthRoutes:
     def test_get_function_metrics_exception(self, mock_perf, client):
         """Test function metrics handles exceptions."""
         mock_perf.get_function_stats.side_effect = Exception("Function metrics failed")
-        
+
         response = client.get("/health/metrics/function/error_function")
-        
+
         assert response.status_code == 500
 
     @patch('app.routes.health.engine')
@@ -191,22 +191,22 @@ class TestHealthRoutes:
         mock_result = MagicMock()
         mock_result.fetchone.return_value = [1]  # For SELECT 1
         mock_conn.execute.return_value = mock_result
-        
+
         # Mock user count query
         mock_user_result = MagicMock()
         mock_user_result.fetchone.return_value = [10]
-        
+
         # Mock story count query
         mock_story_result = MagicMock()
         mock_story_result.fetchone.return_value = [5]
-        
+
         mock_conn.execute.side_effect = [mock_result, mock_user_result, mock_story_result]
-        
+
         mock_engine.begin.return_value.__aenter__.return_value = mock_conn
         mock_engine.begin.return_value.__aexit__.return_value = None
-        
+
         response = client.get("/health/database")
-        
+
         assert response.status_code == 200
         data = response.json()
         assert data["status"] == "healthy"
@@ -217,9 +217,9 @@ class TestHealthRoutes:
     def test_database_health_connection_failure(self, mock_engine, client):
         """Test database health check with connection failure."""
         mock_engine.begin.side_effect = Exception("Connection failed")
-        
+
         response = client.get("/health/database")
-        
+
         assert response.status_code == 503
         data = response.json()
         assert data["status"] == "unhealthy"
@@ -232,15 +232,15 @@ class TestHealthRoutes:
         mock_conn = AsyncMock()
         mock_result = MagicMock()
         mock_result.fetchone.return_value = [1]
-        
+
         # First call succeeds (SELECT 1), second fails (user count)
         mock_conn.execute.side_effect = [mock_result, Exception("Table query failed")]
-        
+
         mock_engine.begin.return_value.__aenter__.return_value = mock_conn
         mock_engine.begin.return_value.__aexit__.return_value = None
-        
+
         response = client.get("/health/database")
-        
+
         assert response.status_code == 200
         data = response.json()
         assert data["status"] == "healthy"
@@ -257,11 +257,11 @@ class TestHealthRoutes:
         mock_processor.model = MagicMock()
         mock_processor.model.__class__.__name__ = "WhisperModel"
         mock_processor.model.device = "cpu"
-        
+
         mock_audio_processor.return_value = mock_processor
-        
+
         response = client.get("/health/audio-processing")
-        
+
         assert response.status_code == 200
         data = response.json()
         assert data["status"] == "healthy"
@@ -277,11 +277,11 @@ class TestHealthRoutes:
         mock_processor.model_size = "tiny"
         mock_processor.supported_formats = [".mp3", ".wav"]
         mock_processor.model = property(lambda self: (_ for _ in ()).throw(Exception("Model loading failed")))
-        
+
         mock_audio_processor.return_value = mock_processor
-        
+
         response = client.get("/health/audio-processing")
-        
+
         assert response.status_code == 200
         data = response.json()
         assert data["status"] == "degraded"
@@ -292,9 +292,9 @@ class TestHealthRoutes:
     def test_audio_processing_health_initialization_failure(self, mock_audio_processor, client):
         """Test audio processing health check with initialization failure."""
         mock_audio_processor.side_effect = Exception("AudioProcessor initialization failed")
-        
+
         response = client.get("/health/audio-processing")
-        
+
         assert response.status_code == 503
         data = response.json()
         assert data["status"] == "unhealthy"
@@ -304,9 +304,9 @@ class TestHealthRoutes:
     def test_ai_services_health_no_api_key(self, mock_settings, client):
         """Test AI services health check with no API key."""
         mock_settings.return_value.OPENAI_API_KEY = None
-        
+
         response = client.get("/health/ai-services")
-        
+
         assert response.status_code == 200
         data = response.json()
         assert data["status"] == "degraded"
@@ -319,19 +319,19 @@ class TestHealthRoutes:
         """Test successful AI services health check."""
         # Mock settings
         mock_settings.return_value.OPENAI_API_KEY = "test_key"
-        
+
         # Mock OpenAI response
         mock_response = MagicMock()
         mock_response.model = "gpt-3.5-turbo"
         mock_response.usage = MagicMock()
         mock_response.usage.model_dump.return_value = {"total_tokens": 1}
-        
+
         mock_client = AsyncMock()
         mock_client.chat.completions.create = AsyncMock(return_value=mock_response)
         mock_openai.return_value = mock_client
-        
+
         response = client.get("/health/ai-services")
-        
+
         assert response.status_code == 200
         data = response.json()
         assert data["status"] == "healthy"
@@ -344,14 +344,14 @@ class TestHealthRoutes:
         """Test AI services health check with API failure."""
         # Mock settings
         mock_settings.return_value.OPENAI_API_KEY = "test_key"
-        
+
         # Mock OpenAI API failure
         mock_client = AsyncMock()
         mock_client.chat.completions.create = AsyncMock(side_effect=Exception("API Error"))
         mock_openai.return_value = mock_client
-        
+
         response = client.get("/health/ai-services")
-        
+
         assert response.status_code == 200
         data = response.json()
         assert data["status"] == "degraded"
@@ -362,9 +362,9 @@ class TestHealthRoutes:
     def test_ai_services_health_exception(self, mock_settings, client):
         """Test AI services health check handles exceptions."""
         mock_settings.side_effect = Exception("Settings failed")
-        
+
         response = client.get("/health/ai-services")
-        
+
         assert response.status_code == 503
         data = response.json()
         assert data["status"] == "unhealthy"
@@ -377,18 +377,18 @@ class TestHealthRoutes:
         # Mock datetime
         mock_datetime.utcnow.return_value.strftime.return_value = "20251003_120000"
         mock_datetime.utcnow.return_value.isoformat.return_value = "2025-10-03T12:00:00"
-        
+
         # Mock Path
         mock_metrics_dir = MagicMock()
         mock_path.return_value = mock_metrics_dir
         mock_metrics_dir.mkdir.return_value = None
         mock_metrics_dir.__truediv__.return_value = "temp-cache/metrics/metrics_export_20251003_120000.json"
-        
+
         # Mock performance metrics
         mock_perf.export_metrics.return_value = None
-        
+
         response = client.post("/health/export-metrics")
-        
+
         assert response.status_code == 200
         data = response.json()
         assert data["status"] == "success"
@@ -399,7 +399,7 @@ class TestHealthRoutes:
     def test_export_metrics_failure(self, mock_perf, client):
         """Test metrics export handles failures."""
         mock_perf.export_metrics.side_effect = Exception("Export failed")
-        
+
         response = client.post("/health/export-metrics")
-        
+
         assert response.status_code == 500

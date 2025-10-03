@@ -121,7 +121,7 @@ app.include_router(confluence.router, prefix="/confluence", tags=["confluence"])
 # Health and monitoring routes
 from app.routes import health
 
-app.include_router(health.router, prefix="/health", tags=["health"])
+app.include_router(health.router, tags=["health"])
 
 
 # Root endpoint
@@ -134,54 +134,6 @@ async def read_root(request: Request):
         logger.error(f"Error serving root page: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
-
-# Health check endpoint
-@app.get("/health")
-async def health_check() -> Dict[str, Any]:
-    """Comprehensive health check endpoint."""
-    from datetime import timezone
-
-    health_status = {
-        "status": "healthy",
-        "timestamp": str(datetime.now(timezone.utc)),
-        "version": settings.VERSION,
-        "environment": settings.ENVIRONMENT,
-        "checks": {},
-    }
-
-    try:
-        # Check database connection
-        from sqlalchemy import text
-
-        async with engine.begin() as conn:
-            await conn.execute(text("SELECT 1"))
-        health_status["checks"]["database"] = "healthy"
-    except Exception as e:
-        health_status["checks"]["database"] = f"unhealthy: {str(e)}"
-        health_status["status"] = "unhealthy"
-
-    # Check disk space for temp files
-    try:
-        from app.utils.temp_manager import get_temp_stats
-
-        temp_stats = get_temp_stats()
-        health_status["checks"]["temp_files"] = {
-            "total_files": temp_stats.get("total_files", 0),
-            "temp_directory": temp_stats.get("temp_directory", "unknown"),
-        }
-    except Exception as e:
-        health_status["checks"]["temp_files"] = f"error: {str(e)}"
-
-    # Check if API keys are configured (without exposing them)
-    health_status["checks"]["api_keys"] = {
-        "openai": "configured" if settings.OPENAI_API_KEY else "not configured",
-        "confluence": "configured" if settings.CONFLUENCE_API_TOKEN else "not configured",
-    }
-
-    if health_status["status"] == "unhealthy":
-        return JSONResponse(status_code=503, content=health_status)
-
-    return health_status
 
 
 # SocketIO event handlers

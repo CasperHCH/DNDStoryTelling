@@ -19,7 +19,7 @@ class TestTempFileManager:
         """Test that TempFileManager follows singleton pattern."""
         manager1 = TempFileManager()
         manager2 = TempFileManager()
-        
+
         assert manager1 is manager2
         assert id(manager1) == id(manager2)
 
@@ -32,7 +32,7 @@ class TestTempFileManager:
     def test_create_temp_file_basic(self):
         """Test basic temporary file creation."""
         manager = TempFileManager()
-        
+
         with manager.create_temp_file() as temp_path:
             assert temp_path is not None
             assert isinstance(temp_path, Path)
@@ -42,7 +42,7 @@ class TestTempFileManager:
     def test_create_temp_file_with_prefix_suffix(self):
         """Test temporary file creation with prefix and suffix."""
         manager = TempFileManager()
-        
+
         with manager.create_temp_file(prefix="test_", suffix=".txt") as temp_path:
             assert temp_path is not None
             assert isinstance(temp_path, Path)
@@ -53,7 +53,7 @@ class TestTempFileManager:
         """Test temporary file creation with initial content."""
         manager = TempFileManager()
         test_content = "Hello, World!"
-        
+
         with manager.create_temp_file(content=test_content) as temp_path:
             assert temp_path.exists()
             content = temp_path.read_text()
@@ -63,7 +63,7 @@ class TestTempFileManager:
         """Test temporary file creation in binary mode."""
         manager = TempFileManager()
         test_content = b"Binary content"
-        
+
         with manager.create_temp_file(content=test_content, mode='wb') as temp_path:
             assert temp_path.exists()
             content = temp_path.read_bytes()
@@ -73,18 +73,18 @@ class TestTempFileManager:
         """Test that temporary files are cleaned up after context."""
         manager = TempFileManager()
         temp_path = None
-        
+
         with manager.create_temp_file() as path:
             temp_path = path
             assert temp_path.exists()
-        
+
         # File should be cleaned up after context
         assert not temp_path.exists()
 
     def test_create_temp_directory_basic(self):
         """Test basic temporary directory creation."""
         manager = TempFileManager()
-        
+
         temp_dir = manager.create_temp_directory()
         assert temp_dir is not None
         assert isinstance(temp_dir, Path)
@@ -94,7 +94,7 @@ class TestTempFileManager:
     def test_create_temp_directory_with_prefix(self):
         """Test temporary directory creation with prefix."""
         manager = TempFileManager()
-        
+
         temp_dir = manager.create_temp_directory(prefix="test_")
         assert temp_dir.exists()
         assert "test_" in temp_dir.name
@@ -102,13 +102,13 @@ class TestTempFileManager:
     def test_cleanup_all_basic(self):
         """Test cleanup of all temporary files."""
         manager = TempFileManager()
-        
+
         # Create some temp files
         temp_paths = []
         for i in range(3):
             with manager.create_temp_file() as temp_path:
                 temp_paths.append(temp_path)
-        
+
         # All should be cleaned up after context
         for path in temp_paths:
             assert not path.exists()
@@ -129,18 +129,18 @@ class TestTempFileManager:
     def test_concurrent_access(self):
         """Test thread safety of the singleton."""
         import threading
-        
+
         instances = []
-        
+
         def create_instance():
             instances.append(TempFileManager())
-        
+
         threads = [threading.Thread(target=create_instance) for _ in range(5)]
         for thread in threads:
             thread.start()
         for thread in threads:
             thread.join()
-        
+
         # All instances should be the same object
         first_instance = instances[0]
         for instance in instances[1:]:
@@ -149,13 +149,13 @@ class TestTempFileManager:
     def test_temp_dir_persistence(self):
         """Test that temp directory persists across multiple operations."""
         manager = TempFileManager()
-        
+
         # Create multiple temp files
         paths = []
         for i in range(3):
             with manager.create_temp_file() as temp_path:
                 paths.append(temp_path.parent)
-        
+
         # All should use the same temp directory
         base_dir = paths[0]
         for path in paths[1:]:
@@ -164,7 +164,7 @@ class TestTempFileManager:
     def test_error_handling_in_cleanup(self):
         """Test error handling during cleanup operations."""
         manager = TempFileManager()
-        
+
         # Mock os.remove to raise an exception
         with patch('app.utils.temp_manager.os.remove', side_effect=OSError("Test error")):
             with patch('app.utils.temp_manager.logger') as mock_logger:
@@ -174,20 +174,20 @@ class TestTempFileManager:
                         pass  # File will fail to clean up
                 except OSError:
                     pass  # Expected
-                
+
                 # Logger should record the error
                 mock_logger.error.assert_called()
 
     def test_pathlib_integration(self):
         """Test integration with pathlib.Path operations."""
         manager = TempFileManager()
-        
+
         with manager.create_temp_file(suffix=".txt") as temp_path:
             # Should support pathlib operations
             assert temp_path.suffix == ".txt"
             assert temp_path.exists()
             assert temp_path.is_file()
-            
+
             # Should support writing/reading
             temp_path.write_text("Test content")
             content = temp_path.read_text()
@@ -196,14 +196,14 @@ class TestTempFileManager:
     def test_temp_file_in_subdirectory(self):
         """Test creating temp files in subdirectories."""
         manager = TempFileManager()
-        
+
         # Create subdirectory first
         subdir = manager.create_temp_directory(prefix="subdir_")
-        
+
         # Create file in subdirectory using manual path construction
         with tempfile.NamedTemporaryFile(dir=str(subdir), delete=False, suffix=".txt") as f:
             temp_path = Path(f.name)
-        
+
         try:
             assert temp_path.exists()
             assert temp_path.parent == subdir
@@ -216,10 +216,10 @@ class TestTempFileManager:
     def test_create_temp_directory_mocked(self, mock_mkdtemp):
         """Test temporary directory creation with mocked tempfile."""
         mock_mkdtemp.return_value = "/tmp/mocked_dir"
-        
+
         manager = TempFileManager()
         result = manager.create_temp_directory(prefix="test_")
-        
+
         assert str(result) == "/tmp/mocked_dir"
         mock_mkdtemp.assert_called_with(prefix="test_")
 
@@ -227,7 +227,7 @@ class TestTempFileManager:
         """Test context manager behavior when exceptions occur."""
         manager = TempFileManager()
         temp_path = None
-        
+
         try:
             with manager.create_temp_file() as path:
                 temp_path = path
@@ -236,7 +236,7 @@ class TestTempFileManager:
                 raise ValueError("Test exception")
         except ValueError:
             pass  # Expected
-        
+
         # File should still be cleaned up despite the exception
         assert not temp_path.exists()
 
@@ -245,7 +245,7 @@ class TestTempFileManager:
         manager1 = TempFileManager()
         manager2 = TempFileManager()
         manager3 = TempFileManager()
-        
+
         assert manager1 is manager2
         assert manager2 is manager3
         assert manager1 is manager3
@@ -253,13 +253,13 @@ class TestTempFileManager:
     def test_file_permissions(self):
         """Test that temporary files have appropriate permissions."""
         manager = TempFileManager()
-        
+
         with manager.create_temp_file() as temp_path:
             # File should be readable and writable by owner
             stat_info = temp_path.stat()
             # Check that file exists and has some permissions
             assert stat_info.st_size >= 0
-            
+
             # Try to write to the file to verify permissions
             temp_path.write_text("Permission test")
             content = temp_path.read_text()
