@@ -32,10 +32,10 @@ class TestErrorHandlerMiddleware:
         """Test that successful requests pass through unchanged."""
         # Setup
         call_next = AsyncMock(return_value=mock_response)
-        
+
         # Execute
         result = await error_handler_middleware(mock_request, call_next)
-        
+
         # Verify
         assert result == mock_response
         call_next.assert_called_once_with(mock_request)
@@ -46,11 +46,11 @@ class TestErrorHandlerMiddleware:
         # Setup
         http_exc = HTTPException(status_code=404, detail="Not found")
         call_next = AsyncMock(side_effect=http_exc)
-        
+
         # Execute and verify
         with pytest.raises(HTTPException) as exc_info:
             await error_handler_middleware(mock_request, call_next)
-        
+
         assert exc_info.value == http_exc
         call_next.assert_called_once_with(mock_request)
 
@@ -60,23 +60,23 @@ class TestErrorHandlerMiddleware:
         """Test handling of Pydantic ValidationError."""
         # Setup
         validation_error = ValidationError.from_exception_data(
-            "TestModel", 
+            "TestModel",
             [{"type": "missing", "loc": ("field",), "msg": "Field required"}]
         )
         call_next = AsyncMock(side_effect=validation_error)
-        
+
         # Execute
         result = await error_handler_middleware(mock_request, call_next)
-        
+
         # Verify
         assert isinstance(result, JSONResponse)
         assert result.status_code == 422
-        
+
         # Check response content
         response_body = result.body.decode()
         assert "Validation Error" in response_body
         assert "Request validation failed" in response_body
-        
+
         # Check logging
         mock_logger.warning.assert_called_once()
         call_args = mock_logger.warning.call_args[0][0]
@@ -90,19 +90,19 @@ class TestErrorHandlerMiddleware:
         # Setup
         db_error = IntegrityError("statement", "params", "orig")
         call_next = AsyncMock(side_effect=db_error)
-        
+
         # Execute
         result = await error_handler_middleware(mock_request, call_next)
-        
+
         # Verify
         assert isinstance(result, JSONResponse)
         assert result.status_code == 500
-        
+
         # Check response content
         response_body = result.body.decode()
         assert "Database Error" in response_body
         assert "A database error occurred" in response_body
-        
+
         # Check logging
         mock_logger.error.assert_called_once()
         call_args = mock_logger.error.call_args[0][0]
@@ -116,18 +116,18 @@ class TestErrorHandlerMiddleware:
         # Setup
         db_error = DatabaseError("statement", "params", "orig")
         call_next = AsyncMock(side_effect=db_error)
-        
+
         # Execute
         result = await error_handler_middleware(mock_request, call_next)
-        
+
         # Verify
         assert isinstance(result, JSONResponse)
         assert result.status_code == 500
-        
+
         # Check response content
         response_body = result.body.decode()
         assert "Database Error" in response_body
-        
+
         # Check logging
         mock_logger.error.assert_called_once()
 
@@ -138,19 +138,19 @@ class TestErrorHandlerMiddleware:
         # Setup
         generic_error = ValueError("Something went wrong")
         call_next = AsyncMock(side_effect=generic_error)
-        
+
         # Execute
         result = await error_handler_middleware(mock_request, call_next)
-        
+
         # Verify
         assert isinstance(result, JSONResponse)
         assert result.status_code == 500
-        
+
         # Check response content
         response_body = result.body.decode()
         assert "Internal Server Error" in response_body
         assert "An unexpected error occurred" in response_body
-        
+
         # Check logging
         mock_logger.error.assert_called_once()
         call_args = mock_logger.error.call_args
@@ -165,18 +165,18 @@ class TestErrorHandlerMiddleware:
         # Setup
         runtime_error = RuntimeError("Runtime issue occurred")
         call_next = AsyncMock(side_effect=runtime_error)
-        
+
         # Execute
         result = await error_handler_middleware(mock_request, call_next)
-        
+
         # Verify
         assert isinstance(result, JSONResponse)
         assert result.status_code == 500
-        
+
         # Check response content
         response_body = result.body.decode()
         assert "Internal Server Error" in response_body
-        
+
         # Check logging with exc_info
         mock_logger.error.assert_called_once()
         call_args = mock_logger.error.call_args
@@ -189,42 +189,49 @@ class TestErrorHandlerMiddleware:
         # Setup
         key_error = KeyError("missing_key")
         call_next = AsyncMock(side_effect=key_error)
-        
+
         # Execute
         result = await error_handler_middleware(mock_request, call_next)
-        
+
         # Verify
         assert isinstance(result, JSONResponse)
         assert result.status_code == 500
-        
+
         # Check response content structure
         response_body = result.body.decode()
         assert "Internal Server Error" in response_body
         assert "An unexpected error occurred" in response_body
-        
+
         # Verify logging behavior
         mock_logger.error.assert_called_once()
 
     @pytest.mark.asyncio
     async def test_multiple_validation_errors(self, mock_request):
         """Test handling of multiple validation errors."""
-        # Setup
-        validation_error = ValidationError.from_exception_data(
-            "TestModel", 
-            [
+        # Setup - Create validation error compatible with Pydantic v2
+        try:
+            validation_error = ValidationError.from_exception_data(
+                "TestModel",
+                [
+                    {"type": "missing", "loc": ("field1",), "msg": "Field 1 required", "input": {}, "ctx": {"error": {}}},
+                    {"type": "value_error", "loc": ("field2",), "msg": "Field 2 must be string", "input": "", "ctx": {"error": {}}}
+                ]
+            )
+        except Exception:
+            # Fallback for different Pydantic versions
+            validation_error = ValidationError([
                 {"type": "missing", "loc": ("field1",), "msg": "Field 1 required"},
                 {"type": "value_error", "loc": ("field2",), "msg": "Field 2 must be string"}
-            ]
-        )
+            ])
         call_next = AsyncMock(side_effect=validation_error)
-        
+
         # Execute
         result = await error_handler_middleware(mock_request, call_next)
-        
+
         # Verify
         assert isinstance(result, JSONResponse)
         assert result.status_code == 422
-        
+
         # Check that multiple errors are included
         response_body = result.body.decode()
         assert "Validation Error" in response_body
@@ -237,17 +244,17 @@ class TestErrorHandlerMiddleware:
         # Setup
         request = MagicMock(spec=Request)
         request.url = "https://api.example.com/v1/stories/upload?param1=value1&param2=value2"
-        
+
         generic_error = Exception("Complex URL test")
         call_next = AsyncMock(side_effect=generic_error)
-        
+
         # Execute
         result = await error_handler_middleware(request, call_next)
-        
+
         # Verify
         assert isinstance(result, JSONResponse)
         assert result.status_code == 500
-        
+
         # Check that the complex URL is logged correctly
         mock_logger.error.assert_called_once()
         logged_message = mock_logger.error.call_args[0][0]
