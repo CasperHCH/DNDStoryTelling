@@ -1,0 +1,99 @@
+# Production Dockerfile with multi-stage build and security hardening
+
+# Build arguments for PIP configuration
+ARG PIP_DEFAULT_TIMEOUT=300
+ARG PIP_RETRIES=5
+
+# Build stage
+FROM python:3.11-slim as builder
+
+# Set work directory
+WORKDIR /build
+
+# Install build dependencies
+RUN apt-get update && apt-get install -y \
+    gcc \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Configure pip
+ENV PIP_DEFAULT_TIMEOUT=${PIP_DEFAULT_TIMEOUT}
+ENV PIP_RETRIES=${PIP_RETRIES}
+ENV PIP_NO_CACHE_DIR=1
+
+# Copy requirements and install to build directory
+COPY requirements.txt .
+RUN pip install --prefix=/build/pip-install -r requirements.txt \
+    && pip install --prefix=/build/pip-install gunicorn
+
+# Production stage
+FROM python:3.11-slim
+
+# Copy installed packages from builder
+COPY --from=builder /build/pip-install /usr/local
+
+# Create non-root user with specific UID/GID for security
+RUN groupadd -g 1001 -r appuser && useradd -u 1001 -r -g appuser appuser
+
+# Set work directory
+WORKDIR /app
+
+# Install only runtime dependencies (no build tools)
+RUN apt-get update && apt-get install -y \
+    ffmpeg \
+    libpq5 \
+    curl \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/* \
+    && rm -rf /tmp/* /var/tmp/*
+
+# Copy application code
+COPY . .
+
+# Copy application code (excluding development files)
+COPY --chown=appuser:appuser app/ ./app/
+COPY --chown=appuser:appuser alembic/ ./alembic/
+COPY --chown=appuser:appuser alembic.ini ./
+COPY --chown=appuser:appuser wait-for-it.sh ./
+
+# Create necessary directories with proper permissions
+RUN mkdir -p /app/uploads /app/logs /app/temp /app/static /app/templates \
+    && chown -R appuser:appuser /app \
+    && chmod -R 750 /app \
+    && chmod +x wait-for-it.sh
+
+# Security hardening - remove shell access for app user
+RUN usermod -s /bin/false appuser
+
+# Switch to non-root user
+USER appuser
+
+# Set security environment variables
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PYTHONPATH=/app
+
+# Health check with improved reliability
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:8000/health || exit 1
+
+# Add labels for better container management
+LABEL maintainer="DNDStoryTelling Team" \
+      version="1.0" \
+      description="Production DND Story Telling API" \
+      security.hardened="true"
+
+# Expose port
+EXPOSE 8000
+
+# Use Gunicorn for production with optimized settings
+CMD ["gunicorn", "app.main:app", \
+     "-w", "4", \
+     "-k", "uvicorn.workers.UvicornWorker", \
+     "--bind", "0.0.0.0:8000", \
+     "--access-logfile", "-", \
+     "--error-logfile", "-", \
+     "--log-level", "info", \
+     "--preload", \
+     "--max-requests", "1000", \
+     "--max-requests-jitter", "100"]

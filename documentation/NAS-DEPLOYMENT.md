@@ -45,7 +45,151 @@ Production Image Includes:
 | **ASUSTOR ADM 4+** | ✅ Via App | ⚠️ | Good | Docker CE app needed |
 | **Generic Docker** | ✅ Manual | ✅ | Varies | Any Docker-capable NAS |
 
-## 🚀 Quick Start Deployment
+## � Creating Docker Images for NAS Upload
+
+### 🏗️ **Build Production Image**
+
+Before deploying to your NAS, you need to create a Docker image. Follow these steps to build and export the production-ready image:
+
+#### **Method 1: Build and Export (Recommended)**
+
+```bash
+# 1. Clone the repository
+git clone https://github.com/CasperHCH/DNDStoryTelling.git
+cd DNDStoryTelling
+
+# 2. Build the production image
+docker build -f Dockerfile.prod -t dndstorytelling:production-v1.0.0 .
+
+# 3. Export the image for NAS upload
+docker save -o dndstorytelling-production-v1.0.0.tar dndstorytelling:production-v1.0.0
+
+# 4. Compress the image (optional, reduces size by ~30%)
+gzip dndstorytelling-production-v1.0.0.tar
+```
+
+#### **Method 2: Using Docker Compose**
+
+```bash
+# 1. Build using docker-compose
+docker-compose -f docker-compose.prod.yml build
+
+# 2. Tag the built image
+docker tag dndstorytelling-web:latest dndstorytelling:production-v1.0.0
+
+# 3. Export the image
+docker save -o dndstorytelling-production-v1.0.0.tar dndstorytelling:production-v1.0.0
+```
+
+### 📦 **Build Options and Variants**
+
+#### **Standard Production Build**
+```bash
+# Full production image with all features
+docker build -f Dockerfile.prod -t dndstorytelling:production-v1.0.0 .
+```
+
+#### **Multi-Architecture Build** (for ARM NAS devices)
+```bash
+# Build for multiple architectures (requires buildx)
+docker buildx build --platform linux/amd64,linux/arm64 \
+  -f Dockerfile.prod -t dndstorytelling:production-v1.0.0 .
+```
+
+#### **Development Build** (for testing)
+```bash
+# Lighter development image
+docker build -t dndstorytelling:dev-latest .
+docker save -o dndstorytelling-dev-latest.tar dndstorytelling:dev-latest
+```
+
+### 🎯 **Image Verification**
+
+After building, verify your image:
+
+```bash
+# Check image details
+docker images dndstorytelling:production-v1.0.0
+
+# Test the image locally
+docker run --rm -p 8000:8000 \
+  -e ENVIRONMENT=production \
+  -e DATABASE_URL=sqlite:///./test.db \
+  -e SECRET_KEY=test-key-for-validation-at-least-32-chars \
+  dndstorytelling:production-v1.0.0
+
+# Verify health endpoint (in another terminal)
+curl http://localhost:8000/health
+```
+
+### 📊 **Expected Build Results**
+
+| Build Type | Image Size | Build Time | Features |
+|------------|------------|------------|----------|
+| **Production** | ~2.5 GB | 8-12 min | Full features, optimized |
+| **Development** | ~2.8 GB | 6-10 min | Debug tools, hot reload |
+| **Multi-arch** | ~5.0 GB | 15-25 min | AMD64 + ARM64 support |
+
+### 🚀 **Image Transfer Methods**
+
+Once built, you can transfer the image to your NAS:
+
+#### **Direct Upload** (Web Interface)
+1. Navigate to your NAS Docker interface
+2. Import the `.tar` file directly
+
+#### **Network Transfer** (SSH/SCP)
+```bash
+# Copy to NAS
+scp dndstorytelling-production-v1.0.0.tar admin@your-nas-ip:/volume1/docker/
+
+# Load on NAS
+ssh admin@your-nas-ip
+docker load -i /volume1/docker/dndstorytelling-production-v1.0.0.tar
+```
+
+#### **Cloud Storage** (Dropbox/Google Drive)
+1. Upload `.tar` file to cloud storage
+2. Download directly on NAS
+3. Import through Docker interface
+
+### 🛠️ **Troubleshooting Build Issues**
+
+#### **Build Fails with Memory Error**
+```bash
+# Increase Docker memory limit or use --memory flag
+docker build --memory=4g -f Dockerfile.prod -t dndstorytelling:production-v1.0.0 .
+```
+
+#### **Network Timeout During Build**
+```bash
+# Use build args for pip timeouts
+docker build --build-arg PIP_DEFAULT_TIMEOUT=300 \
+  --build-arg PIP_RETRIES=5 \
+  -f Dockerfile.prod -t dndstorytelling:production-v1.0.0 .
+```
+
+#### **Large Build Context**
+```bash
+# Use .dockerignore to exclude unnecessary files
+echo "node_modules
+.git
+*.pyc
+__pycache__
+.pytest_cache
+htmlcov" > .dockerignore
+```
+
+### ✅ **Build Verification Checklist**
+
+- [ ] Image builds without errors
+- [ ] Image size is reasonable (< 3GB)
+- [ ] Health endpoint responds when running
+- [ ] All required dependencies included
+- [ ] Environment variables work correctly
+- [ ] Database connections can be established
+
+## �🚀 Quick Start Deployment
 
 ### 1️⃣ **Pre-Deployment Checklist**
 

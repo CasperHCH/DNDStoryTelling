@@ -1,0 +1,276 @@
+name: "Docker Build & Test"
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  docker-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Log in to Container Registry
+      if: github.event_name != 'pull_request'
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Extract metadata
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+        tags: |
+          type=ref,event=branch
+          type=ref,event=pr
+          type=sha,prefix={{branch}}-
+          type=raw,value=latest,enable={{is_default_branch}}
+
+    - name: Build and test Docker image (Development)
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: ./deployment/docker/Dockerfile
+        push: false
+        tags: dndstorytelling:dev-test
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+        build-args: |
+          BUILDKIT_INLINE_CACHE=1
+          PIP_DEFAULT_TIMEOUT=300
+
+    - name: Test development image with health checks
+      run: |
+        echo "🧪 Starting development container..."
+        docker run --rm -d \
+          -e ENVIRONMENT=test \
+          -e DATABASE_URL=sqlite:///./test.db \
+          -e SECRET_KEY=test-secret-key-for-docker-actions \
+          -p 8000:8000 \
+          --name test-container \
+          --health-cmd="curl -f http://localhost:8000/health || exit 1" \
+          --health-interval=5s \
+          --health-timeout=3s \
+          --health-retries=3 \
+          --health-start-period=30s \
+          dndstorytelling:dev-test
+
+        echo "⏳ Waiting for container to be healthy..."
+        timeout=60
+        elapsed=0
+
+        while [ $elapsed -lt $timeout ]; do
+          health_status=$(docker inspect --format='{{.State.Health.Status}}' test-container 2>/dev/null || echo "unknown")
+
+          if [ "$health_status" = "healthy" ]; then
+            echo "✅ Container is healthy"
+            break
+          elif [ "$health_status" = "unhealthy" ]; then
+            echo "❌ Container is unhealthy"
+            docker logs test-container
+            docker stop test-container
+            exit 1
+          fi
+
+          sleep 2
+          elapsed=$((elapsed + 2))
+          echo "Health status: $health_status (${elapsed}s elapsed)"
+        done
+
+        if [ $elapsed -ge $timeout ]; then
+          echo "❌ Container failed to become healthy within $timeout seconds"
+          docker logs test-container
+          docker stop test-container
+          exit 1
+        fi
+
+        # Test multiple endpoints
+        echo "🔍 Testing API endpoints..."
+        for endpoint in "health" "docs"; do
+          echo "Testing /$endpoint..."
+          if curl -f -s "http://localhost:8000/$endpoint" > /dev/null; then
+            echo "✅ /$endpoint endpoint is responding"
+          else
+            echo "❌ /$endpoint endpoint failed"
+            docker logs test-container
+            docker stop test-container
+            exit 1
+          fi
+        done
+
+        # Performance test
+        echo "⚡ Running basic performance test..."
+        time curl -s "http://localhost:8000/health" > /dev/null
+
+        echo "🧹 Stopping test container..."
+        docker stop test-container
+
+    - name: Build and test Docker image (Production)
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: ./deployment/docker/Dockerfile.prod
+        push: false
+        tags: dndstorytelling:prod-test
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+        build-args: |
+          BUILDKIT_INLINE_CACHE=1
+          PIP_DEFAULT_TIMEOUT=300
+          PIP_RETRIES=5
+
+    - name: Test production image with comprehensive checks
+      run: |
+        echo "🏭 Starting production container..."
+        docker run --rm -d \
+          -e ENVIRONMENT=production \
+          -e DATABASE_URL=sqlite:///./test.db \
+          -e SECRET_KEY=test-secret-key-for-docker-actions-production \
+          -p 8001:8000 \
+          --name test-prod-container \
+          --health-cmd="curl -f http://localhost:8000/health || exit 1" \
+          --health-interval=5s \
+          --health-timeout=3s \
+          --health-retries=3 \
+          --health-start-period=45s \
+          dndstorytelling:prod-test
+
+        echo "⏳ Waiting for production container to be healthy..."
+        timeout=90
+        elapsed=0
+
+        while [ $elapsed -lt $timeout ]; do
+          health_status=$(docker inspect --format='{{.State.Health.Status}}' test-prod-container 2>/dev/null || echo "unknown")
+
+          if [ "$health_status" = "healthy" ]; then
+            echo "✅ Production container is healthy"
+            break
+          elif [ "$health_status" = "unhealthy" ]; then
+            echo "❌ Production container is unhealthy"
+            docker logs test-prod-container
+            docker stop test-prod-container
+            exit 1
+          fi
+
+          sleep 3
+          elapsed=$((elapsed + 3))
+          echo "Health status: $health_status (${elapsed}s elapsed)"
+        done
+
+        if [ $elapsed -ge $timeout ]; then
+          echo "❌ Production container failed to become healthy within $timeout seconds"
+          docker logs test-prod-container
+          docker stop test-prod-container
+          exit 1
+        fi
+
+        # Comprehensive endpoint testing
+        echo "🔍 Running comprehensive endpoint tests..."
+        endpoints=("health" "docs")
+
+        for endpoint in "${endpoints[@]}"; do
+          echo "Testing /$endpoint..."
+          response=$(curl -s -w "%{http_code}" -o /dev/null "http://localhost:8001/$endpoint" 2>/dev/null || echo "000")
+
+          if [[ "$response" =~ ^(200|404)$ ]]; then
+            echo "✅ /$endpoint: HTTP $response"
+          else
+            echo "❌ /$endpoint: HTTP $response"
+            docker logs test-prod-container
+            docker stop test-prod-container
+            exit 1
+          fi
+        done
+
+        # Security check - ensure running as non-root
+        echo "🔒 Checking container security..."
+        user_id=$(docker exec test-prod-container id -u)
+        if [ "$user_id" != "0" ]; then
+          echo "✅ Container running as non-root user (UID: $user_id)"
+        else
+          echo "⚠️ Warning: Container running as root"
+        fi
+
+        echo "🧹 Stopping production container..."
+        docker stop test-prod-container
+
+    - name: Build and push Docker image
+      if: github.event_name != 'pull_request'
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: ./deployment/docker/Dockerfile.prod
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+        build-args: |
+          BUILDKIT_INLINE_CACHE=1
+          PIP_DEFAULT_TIMEOUT=300
+          PIP_RETRIES=5
+
+  security-scan:
+    runs-on: ubuntu-latest
+    needs: docker-test
+    timeout-minutes: 15
+    if: always()
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Build image for security scan
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: ./deployment/docker/Dockerfile.prod
+        push: false
+        tags: dndstorytelling:security-scan
+        cache-from: type=gha
+
+    - name: Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@master
+      with:
+        image-ref: 'dndstorytelling:security-scan'
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+
+    - name: Upload Trivy scan results
+      uses: github/codeql-action/upload-sarif@v3
+      if: always()
+      with:
+        sarif_file: 'trivy-results.sarif'
+        category: 'docker-security'
+
+    - name: Run Docker Scout
+      if: github.event_name != 'pull_request'
+      continue-on-error: true
+      uses: docker/scout-action@v1
+      with:
+        command: cves
+        image: dndstorytelling:security-scan
+        to-latest: true
+        ignore-unfixed: true
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        only-severities: critical,high
+        write-comment: true

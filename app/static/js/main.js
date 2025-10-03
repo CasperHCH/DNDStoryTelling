@@ -106,11 +106,32 @@ function handleFile(file) {
     addMessage('system', `File selected: ${file.name}`);
 }
 
-// File upload handler
+// File upload handler with retry logic and better error handling
 uploadBtn.addEventListener('click', async () => {
     const file = fileInput.files[0];
-    if (!file) return;
+    if (!file) {
+        addMessage('error', 'Please select a file first.');
+        return;
+    }
 
+    // Validate file size (50MB default limit)
+    const maxSize = 50 * 1024 * 1024; // 50MB
+    if (file.size > maxSize) {
+        addMessage('error', `File too large. Maximum size is ${Math.round(maxSize / 1024 / 1024)}MB.`);
+        return;
+    }
+
+    // Validate file type
+    const allowedTypes = ['audio/mpeg', 'audio/wav', 'audio/m4a', 'audio/ogg', 'audio/flac', 'text/plain'];
+    if (!allowedTypes.includes(file.type) && !file.name.match(/\.(mp3|wav|m4a|ogg|flac|txt)$/i)) {
+        addMessage('error', 'Unsupported file type. Please use MP3, WAV, M4A, OGG, FLAC, or TXT files.');
+        return;
+    }
+
+    await uploadFileWithRetry(file, 3);
+});
+
+async function uploadFileWithRetry(file, maxRetries = 3) {
     const formData = new FormData();
     formData.append('file', file);
 
@@ -118,44 +139,85 @@ uploadBtn.addEventListener('click', async () => {
     uploadProgress.classList.remove('hidden');
     uploadBtn.disabled = true;
     uploadBtn.textContent = 'Processing...';
+    uploadBtn.setAttribute('aria-busy', 'true');
 
-    try {
-        // Simulate upload progress
-        let progress = 0;
-        const progressInterval = setInterval(() => {
-            progress += 5;
-            if (progress <= 90) {
-                uploadProgressBar.style.width = `${progress}%`;
-            } else {
-                clearInterval(progressInterval);
+    let retryCount = 0;
+
+    while (retryCount < maxRetries) {
+        try {
+            // Simulate upload progress
+            let progress = 0;
+            const progressInterval = setInterval(() => {
+                progress += Math.random() * 10 + 5; // Variable progress speed
+                if (progress <= 90) {
+                    uploadProgressBar.style.width = `${Math.min(progress, 90)}%`;
+                    uploadProgressBar.setAttribute('aria-valuenow', Math.min(progress, 90));
+                } else {
+                    clearInterval(progressInterval);
+                }
+            }, 300);
+
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 300000); // 5 minute timeout
+
+            const response = await fetch('/upload', {
+                method: 'POST',
+                body: formData,
+                signal: controller.signal,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+
+            clearTimeout(timeoutId);
+            clearInterval(progressInterval);
+            uploadProgressBar.style.width = '100%';
+            uploadProgressBar.setAttribute('aria-valuenow', 100);
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({ error: 'Unknown error occurred' }));
+                throw new Error(`Upload failed: ${errorData.error || response.statusText}`);
             }
-        }, 200);
 
-        const response = await fetch('/upload', {
-            method: 'POST',
-            body: formData
-        });
+            const data = await response.json();
+            addMessage('system', 'File processed successfully. Starting analysis...');
 
-        // Complete the progress bar
-        clearInterval(progressInterval);
-        uploadProgressBar.style.width = '100%';
+            // Reset the button after processing
+            setTimeout(() => {
+                resetUploadButton();
+                uploadProgress.classList.add('hidden');
+            }, 2000);
+            return; // Success, exit retry loop
 
-        const data = await response.json();
-        addMessage('system', 'File processed successfully. Starting analysis...');
+        } catch (error) {
+            retryCount++;
+            console.error(`Upload attempt ${retryCount} failed:`, error);
 
-        // Reset the button after processing
-        setTimeout(() => {
-            uploadBtn.disabled = false;
-            uploadBtn.textContent = 'Process File';
-        }, 1000);
-    } catch (error) {
-        uploadProgressBar.style.width = '0%';
-        uploadProgress.classList.add('hidden');
-        uploadBtn.disabled = false;
-        uploadBtn.textContent = 'Process File';
-        addMessage('error', 'Error processing file. Please try again.');
+            if (error.name === 'AbortError') {
+                addMessage('error', 'Upload timed out. Please try again with a smaller file.');
+                break;
+            }
+
+            if (retryCount >= maxRetries) {
+                addMessage('error', `Upload failed after ${maxRetries} attempts: ${error.message}`);
+            } else {
+                addMessage('system', `Upload failed, retrying... (${retryCount}/${maxRetries})`);
+                await new Promise(resolve => setTimeout(resolve, 1000 * retryCount)); // Exponential backoff
+            }
+        }
     }
-});
+
+    // Reset on failure
+    resetUploadButton();
+    uploadProgressBar.style.width = '0%';
+    uploadProgress.classList.add('hidden');
+}
+
+function resetUploadButton() {
+    uploadBtn.disabled = false;
+    uploadBtn.textContent = 'Process File';
+    uploadBtn.setAttribute('aria-busy', 'false');
+}
 
 // Configuration handlers
 saveConfigBtn.addEventListener('click', saveConfiguration);

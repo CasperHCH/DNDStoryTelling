@@ -34,20 +34,67 @@
     transition: width 0.2s ease-in-out;
 }
 
-/* Better focus states for accessibility */
-input:focus, button:focus {
-    outline: 2px solid rgba(59, 130, 246, 0.5);
+/* Enhanced accessibility and focus states */
+input:focus, button:focus, textarea:focus, select:focus {
+    outline: 2px solid rgba(59, 130, 246, 0.8);
     outline-offset: 2px;
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2);
 }
 
-/* Improved hover states */
-button:hover {
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    input:focus, button:focus, textarea:focus, select:focus {
+        outline: 3px solid currentColor;
+        outline-offset: 2px;
+    }
+}
+
+/* Reduced motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* Improved hover states with accessibility */
+button:hover:not(:disabled) {
     transform: translateY(-1px);
-    transition: all 0.2s;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
-button:active {
+button:active:not(:disabled) {
     transform: translateY(0px);
+}
+
+button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none !important;
+}
+
+/* Loading states */
+.loading {
+    position: relative;
+    overflow: hidden;
+}
+
+.loading::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+    animation: loading-shimmer 2s infinite;
+}
+
+@keyframes loading-shimmer {
+    0% { left: -100%; }
+    100% { left: 100%; }
 }
 
 /* File upload styling */

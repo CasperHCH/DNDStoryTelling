@@ -76,4 +76,5 @@ Thumbs.db
 *.temp
 temp/
 tmp/
+temp-cache/
 .alembic_new/

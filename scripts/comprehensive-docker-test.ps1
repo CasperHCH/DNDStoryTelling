@@ -156,8 +156,8 @@ $composeFiles | Where-Object { Test-Path $_ } | ForEach-Object {
 }
 Write-Host ""
 
-# Test 7: Dependencies Analysis
-Write-Host "✅ Test 7: Python Dependencies" -ForegroundColor Green
+# Test 7: Dependencies and Assets Analysis
+Write-Host "✅ Test 7: Dependencies and Modern Features" -ForegroundColor Green
 if (Test-Path "requirements.txt") {
     $deps = Get-Content "requirements.txt"
     $totalDeps = $deps.Count
@@ -176,6 +176,55 @@ if (Test-Path "requirements.txt") {
     }
 } else {
     Write-Host "❌ requirements.txt not found" -ForegroundColor Red
+}
+
+# Check modern UI assets
+Write-Host "🎨 Modern UI Assets:" -ForegroundColor White
+$staticAssets = @(
+    @{Path="app/static/css/style.css"; Name="Custom styles"},
+    @{Path="app/static/js/main.js"; Name="Main JavaScript"},
+    @{Path="app/static/js/tailwind.config.js"; Name="Tailwind config"}
+)
+foreach ($asset in $staticAssets) {
+    if (Test-Path $asset.Path) {
+        $size = [math]::Round(((Get-Item $asset.Path).Length / 1KB), 1)
+        Write-Host "  ✅ $($asset.Name) ($size KB)" -ForegroundColor Green
+    } else {
+        Write-Host "  ❌ $($asset.Name) missing" -ForegroundColor Red
+    }
+}
+
+# Check GitHub Actions workflows
+Write-Host "🔄 CI/CD Workflows:" -ForegroundColor White
+$workflows = @(
+    @{Path=".github/workflows/ci.yml"; Name="CI Pipeline"},
+    @{Path=".github/workflows/docker.yml"; Name="Docker Pipeline"}
+)
+foreach ($workflow in $workflows) {
+    if (Test-Path $workflow.Path) {
+        Write-Host "  ✅ $($workflow.Name)" -ForegroundColor Green
+    } else {
+        Write-Host "  ❌ $($workflow.Name) missing" -ForegroundColor Red
+    }
+}
+
+# Check template enhancements
+Write-Host "📄 Template Features:" -ForegroundColor White
+$templates = @("app/templates/base.html", "app/templates/index.html", "app/templates/story.html")
+foreach ($template in $templates) {
+    if (Test-Path $template) {
+        $content = Get-Content $template -Raw
+        $features = @()
+        if ($content -match "dark.*mode|theme-dark") { $features += "Dark mode" }
+        if ($content -match "prefers-reduced-motion") { $features += "Accessibility" }
+        if ($content -match "og:") { $features += "Open Graph" }
+        if ($content -match "socket\.io") { $features += "WebSocket" }
+
+        $featureText = if ($features) { "($($features -join ', '))" } else { "(basic)" }
+        Write-Host "  ✅ $(Split-Path $template -Leaf) $featureText" -ForegroundColor Green
+    } else {
+        Write-Host "  ❌ $(Split-Path $template -Leaf) missing" -ForegroundColor Red
+    }
 }
 Write-Host ""
 
@@ -238,8 +287,58 @@ if ($IncludeBuild) {
 }
 Write-Host ""
 
+# Test 11: Modern Features Validation
+Write-Host "✅ Test 11: Enhanced Features Check" -ForegroundColor Green
+
+# Check for retry logic in JavaScript
+if (Test-Path "app/static/js/main.js") {
+    $jsContent = Get-Content "app/static/js/main.js" -Raw
+    $features = @()
+    if ($jsContent -match "retry|attempt") { $features += "Retry logic" }
+    if ($jsContent -match "AbortController") { $features += "Timeout handling" }
+    if ($jsContent -match "aria-") { $features += "ARIA accessibility" }
+    if ($jsContent -match "addEventListener.*error") { $features += "Error handling" }
+
+    Write-Host "🔧 JavaScript enhancements: $($features -join ', ')" -ForegroundColor Cyan
+}
+
+# Check CSS accessibility features
+if (Test-Path "app/static/css/style.css") {
+    $cssContent = Get-Content "app/static/css/style.css" -Raw
+    $features = @()
+    if ($cssContent -match "prefers-reduced-motion") { $features += "Motion preferences" }
+    if ($cssContent -match "prefers-contrast") { $features += "High contrast" }
+    if ($cssContent -match "focus-visible") { $features += "Focus management" }
+    if ($cssContent -match "loading") { $features += "Loading states" }
+
+    Write-Host "� CSS accessibility: $($features -join ', ')" -ForegroundColor Cyan
+}
+
+# Check workflow enhancements
+if (Test-Path ".github/workflows/ci.yml") {
+    $ciContent = Get-Content ".github/workflows/ci.yml" -Raw
+    $features = @()
+    if ($ciContent -match "matrix:") { $features += "Matrix testing" }
+    if ($ciContent -match "cache") { $features += "Dependency caching" }
+    if ($ciContent -match "flake8|mypy") { $features += "Linting/typing" }
+    if ($ciContent -match "codecov") { $features += "Coverage reporting" }
+
+    Write-Host "🔄 CI enhancements: $($features -join ', ')" -ForegroundColor Cyan
+}
+
+if (Test-Path ".github/workflows/docker.yml") {
+    $dockerWorkflow = Get-Content ".github/workflows/docker.yml" -Raw
+    $dockerFeatures = @()
+    if ($dockerWorkflow -match "trivy") { $dockerFeatures += "Security scanning" }
+    if ($dockerWorkflow -match "buildx") { $dockerFeatures += "Multi-arch builds" }
+    if ($dockerWorkflow -match "health") { $dockerFeatures += "Health checks" }
+
+    Write-Host "🐳 Docker workflow: $($dockerFeatures -join ', ')" -ForegroundColor Cyan
+}
+Write-Host ""
+
 # Summary
-Write-Host "🎉 Comprehensive Docker Test Complete!" -ForegroundColor Green
+Write-Host "🎉 Comprehensive Modernization Test Complete!" -ForegroundColor Green
 Write-Host "📋 Summary:" -ForegroundColor Cyan
 Write-Host "   - Docker environment validated" -ForegroundColor White
 Write-Host "   - All Compose files checked" -ForegroundColor White

@@ -9,6 +9,53 @@ Transform your D&D session recordings into compelling narrative summaries using 
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.104.1-blue.svg)
 ![Docker](https://img.shields.io/badge/docker-ready-blue.svg)
 
+## 🆕 Recent Updates (October 2025)
+
+**🎉 Major Project Reorganization!** The project has been restructured for better maintainability and easier navigation:
+
+- **📚 Centralized Documentation**: All documentation moved to `documentation/` folder
+- **🚀 Organized Deployment**: Docker configs and deployment files in `deployment/` folder  
+- **⚙️ Configuration Management**: All config files centralized in `configuration/` folder
+- **🧪 Testing Suite**: Comprehensive testing framework in `testing/` folder
+- **🐳 Enhanced Docker**: Production-ready Docker setup with security hardening
+- **📋 Improved CI/CD**: Enhanced GitHub Actions with comprehensive testing
+
+## 📁 Project Structure
+
+This project is organized for easy navigation and maintenance:
+
+```
+DNDStoryTelling/
+├── 📋 README.md                    # This file - main project overview
+├── 🐍 app/                         # Main application source code
+├── 🗃️ alembic/                     # Database migrations
+├── ⚙️ configuration/               # All configuration files
+│   ├── .env.* files               # Environment configurations
+│   ├── pytest.ini                # Testing configuration
+│   └── alembic.ini               # Database migration config
+├── 🚀 deployment/                  # Deployment configurations
+│   ├── docker/                    # Docker configurations
+│   │   ├── docker-compose.yml     # Development setup
+│   │   ├── docker-compose.prod.yml # Production setup
+│   │   ├── Dockerfile             # Development container
+│   │   ├── Dockerfile.prod        # Production container
+│   │   ├── nginx/                 # Nginx configuration
+│   │   └── postgres/              # PostgreSQL configuration
+│   └── docker-packages/           # Packaged Docker distributions
+├── 📚 documentation/               # All project documentation
+│   ├── README-Docker.md           # Docker setup guide
+│   ├── DEPLOYMENT.md              # Deployment instructions
+│   ├── CONTRIBUTING.md            # Contribution guidelines
+│   └── UI.md                      # User interface documentation
+├── 🧪 testing/                     # Testing files and scripts
+│   ├── tests/                     # Unit and integration tests
+│   ├── test-docker.ps1           # Docker testing script
+│   └── test-requirements.txt      # Testing dependencies
+├── 📜 scripts/                     # Utility scripts
+├── 🔧 .github/                     # GitHub Actions CI/CD
+└── 📦 requirements.txt             # Python dependencies
+```
+
 ## ✨ Features
 
 ### 🎯 Core Functionality
@@ -56,17 +103,17 @@ Supports all major audio formats:
 
 2. **Configure environment**:
    ```bash
-   cp .env.example .env
-   # Edit .env with your API keys (see Configuration section)
+   cp configuration/.env.example configuration/.env
+   # Edit configuration/.env with your API keys (see Configuration section)
    ```
 
 3. **Deploy with Docker**:
    ```bash
    # Production deployment
-   docker-compose -f docker-compose.prod.yml up -d
+   docker-compose -f deployment/docker/docker-compose.yml -f deployment/docker/docker-compose.prod.yml up -d
 
    # Or development environment
-   docker-compose up -d
+   docker-compose -f deployment/docker/docker-compose.yml up -d
    ```
 
 4. **Run database migrations**:
@@ -75,9 +122,11 @@ Supports all major audio formats:
    ```
 
 5. **Access the application**:
-   - **Web Interface**: http://localhost:8000
+   - **Web Interface**: http://localhost:8000 (production) or http://localhost:8001 (development)
    - **API Documentation**: http://localhost:8000/docs
    - **Health Check**: http://localhost:8000/health
+
+> 📖 **For detailed Docker setup instructions**, see [`documentation/README-Docker.md`](documentation/README-Docker.md)
 
 ### 🖥️ Local Development
 
@@ -90,28 +139,53 @@ Supports all major audio formats:
 
 2. **Configure environment**:
    ```bash
-   cp .env.example .env
-   # Edit .env file with your settings
+   cp configuration/.env.example configuration/.env
+   # Edit configuration/.env file with your settings
    ```
 
-3. **Run the application**:
+3. **Set up database**:
+   ```bash
+   # Copy alembic.ini to root for database migrations
+   cp configuration/alembic.ini .
+   alembic upgrade head
+   ```
+
+4. **Run the application**:
    ```bash
    uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
    ```
 
+> 📖 **For detailed setup instructions**, see [`documentation/DEPLOYMENT.md`](documentation/DEPLOYMENT.md)
+
 ### 📦 NAS Deployment
 
 For deployment on Synology, QNAP, or other NAS systems, see our comprehensive guides:
-- 📋 [Quick Deployment Checklist](./DEPLOYMENT-CHECKLIST.md)
-- 🔧 [NAS Deployment Guide](./NAS-DEPLOYMENT.md)
-- 🚀 [Production Deployment](./DEPLOYMENT.md)
-- 🛠️ [GitHub Actions Troubleshooting](./docs/GITHUB-ACTIONS-TROUBLESHOOTING.md)
+
+#### 🔨 **Creating Docker Images**
+To create Docker images for NAS upload:
+```bash
+# Build production image
+docker build -f Dockerfile.prod -t dndstorytelling:production-v1.0.0 .
+
+# Export for NAS upload
+docker save -o dndstorytelling-production-v1.0.0.tar dndstorytelling:production-v1.0.0
+```
+
+#### 📖 **Deployment Guides**
+- 🐳 [Docker Setup Guide](./documentation/README-Docker.md) - **Complete Docker deployment guide**
+- 📦 [Docker Packaging Guide](./documentation/DOCKER-PACKAGING.md) - **Complete containerization and packaging**
+- 📋 [Quick Deployment Checklist](./documentation/DEPLOYMENT-CHECKLIST.md)
+- 🔧 [NAS Deployment Guide](./documentation/NAS-DEPLOYMENT.md) - **Includes detailed Docker image creation**
+- 🚀 [Production Deployment](./documentation/DEPLOYMENT.md)
+- 🛠️ [GitHub Actions Troubleshooting](./documentation/GITHUB-ACTIONS-TROUBLESHOOTING.md)
 
 ## ⚙️ Configuration
 
 ### 🔐 Environment Variables
 
-Create a `.env` file with the following configuration:
+Create a `.env` file in the `configuration/` folder with the following configuration:
+
+> 💡 **Tip**: Copy `configuration/.env.example` as a starting point
 
 ```bash
 # Environment Configuration
@@ -219,7 +293,7 @@ RATE_LIMIT_WINDOW=3600                   # 1 hour in seconds
 
 ## 🏗️ Project Architecture
 
-### 📁 Directory Structure
+### 📁 Directory Structure (Updated - October 2025)
 
 ```
 DNDStoryTelling/
@@ -235,9 +309,30 @@ DNDStoryTelling/
 │   ├── ⚙️ config.py                 # Application configuration
 │   └── 🚀 main.py                   # FastAPI application entry point
 ├── 🗄️ alembic/                     # Database migration scripts
-├── 🐳 postgres/                     # PostgreSQL configuration
-├── 📄 docs/                         # Documentation files
-├── 🧪 tests/                        # Test suite
+├── ⚙️ configuration/                # All configuration files
+│   ├── .env.example                # Environment template
+│   ├── .env.docker                 # Docker environment
+│   ├── pytest.ini                  # Testing configuration
+│   └── alembic.ini                  # Migration configuration
+├── � deployment/                   # All deployment files
+│   ├── docker/                      # Docker configurations
+│   │   ├── docker-compose.yml       # Development setup
+│   │   ├── docker-compose.prod.yml  # Production setup
+│   │   ├── Dockerfile               # Development image
+│   │   ├── Dockerfile.prod          # Production image
+│   │   ├── nginx/                   # Nginx proxy configuration
+│   │   └── postgres/                # PostgreSQL configuration
+│   └── docker-packages/             # Pre-built Docker packages
+├── � documentation/                # Complete project documentation
+│   ├── README-Docker.md             # Docker setup guide
+│   ├── DEPLOYMENT.md                # Deployment instructions
+│   ├── CONTRIBUTING.md              # Development guidelines
+│   └── UI.md                        # User interface guide
+├── 🧪 testing/                      # Testing suite and scripts
+│   ├── tests/                       # Unit and integration tests
+│   ├── test-docker.ps1              # Docker testing script
+│   └── test-requirements.txt        # Testing dependencies
+├── 📜 scripts/                      # Utility and automation scripts
 │   ├── 🌐 ui/                       # UI/browser tests
 │   └── 🔧 test_*.py                 # Unit & integration tests
 ├── 🛠️ scripts/                     # Utility scripts
@@ -393,7 +488,7 @@ docker-compose logs --tail=100 -f
 
 ## 🤝 Contributing
 
-We welcome contributions! Please see our [Contributing Guide](./docs/CONTRIBUTING.md) for details.
+We welcome contributions! Please see our [Contributing Guide](./documentation/CONTRIBUTING.md) for details.
 
 ### Development Setup
 
@@ -432,10 +527,13 @@ This project is licensed under the **MIT License** - see the [LICENSE](./LICENSE
 
 | Document | Description |
 |----------|-------------|
-| [Contributing Guide](./docs/CONTRIBUTING.md) | Development setup and contribution guidelines |
-| [UI Documentation](./docs/UI.md) | Interface components and design system |
-| [GitHub Actions Troubleshooting](./docs/GITHUB-ACTIONS-TROUBLESHOOTING.md) | CI/CD workflow issues and solutions |
-| [GitHub Actions Fixes](./GITHUB-ACTIONS-FIXES-SUMMARY.md) | Complete summary of all workflow fixes |
+| [Docker Setup Guide](./documentation/README-Docker.md) | Complete Docker deployment and configuration |
+| [Contributing Guide](./documentation/CONTRIBUTING.md) | Development setup and contribution guidelines |
+| [UI Documentation](./documentation/UI.md) | Interface components and design system |
+| [Deployment Guide](./documentation/DEPLOYMENT.md) | Production deployment instructions |
+| [NAS Deployment](./documentation/NAS-DEPLOYMENT.md) | NAS system deployment guide |
+| [GitHub Actions Troubleshooting](./documentation/GITHUB-ACTIONS-TROUBLESHOOTING.md) | CI/CD workflow issues and solutions |
+| [GitHub Actions Fixes](./documentation/GITHUB-ACTIONS-FIXES-SUMMARY.md) | Complete summary of all workflow fixes |
 
 ### 🚀 Deployment Guides
 

@@ -1,28 +1,33 @@
+# Build arguments for PIP configuration
+ARG PIP_DEFAULT_TIMEOUT=300
+ARG PIP_RETRIES=5
+
 FROM python:3.11-slim
 
 WORKDIR /app
 
-# Install system dependencies
+# Install system dependencies in single layer with cleanup
 RUN apt-get update && apt-get install -y \
     gcc \
     ffmpeg \
     libpq-dev \
     netcat-openbsd \
     curl \
-    && rm -rf /var/lib/apt/lists/*
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/* \
+    && rm -rf /tmp/* /var/tmp/*
 
-# Copy requirements and install Python packages
+# Configure pip with build args
+ENV PIP_DEFAULT_TIMEOUT=${PIP_DEFAULT_TIMEOUT}
+ENV PIP_RETRIES=${PIP_RETRIES}
+ENV PIP_NO_CACHE_DIR=1
+
+# Copy requirements and install Python packages in single layer
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-
-# Install Playwright and its browsers
-RUN pip install playwright && playwright install --with-deps
-
-# Install ffmpeg-python explicitly
-RUN pip install ffmpeg-python
-
-# Install asyncpg for asynchronous database support
-RUN pip install asyncpg
+RUN pip install -r requirements.txt \
+    && pip install playwright ffmpeg-python asyncpg \
+    && playwright install --with-deps \
+    && rm -rf /root/.cache/pip
 
 # Copy application code
 COPY . .
