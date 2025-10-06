@@ -2,8 +2,8 @@ services:
   # Main application service - Comprehensive test configuration
   web:
     build:
-      context: .
-      dockerfile: Dockerfile
+      context: ../../
+      dockerfile: deployment/docker/Dockerfile
     ports:
       - "8001:8000"  # Different port to avoid conflicts
     environment:
@@ -29,8 +29,8 @@ services:
   # Test runner service with isolated environment
   test:
     build:
-      context: .
-      dockerfile: Dockerfile.test
+      context: ../../
+      dockerfile: deployment/docker/Dockerfile.test
     environment:
       - ENVIRONMENT=test
       - DEBUG=true
