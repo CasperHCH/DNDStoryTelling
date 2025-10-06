@@ -52,12 +52,16 @@ class Settings(BaseSettings):
     CONFLUENCE_URL: Optional[str] = Field(default=None)
     CONFLUENCE_PARENT_PAGE_ID: Optional[str] = Field(default=None)
 
+    # Server settings
+    HOST: str = Field(default="0.0.0.0")
+    PORT: int = Field(default=8000)
+
     # Application settings
     APP_NAME: str = Field(default="D&D Story Telling")
     VERSION: str = Field(default="1.0.0")
 
     # File upload settings
-    MAX_FILE_SIZE: int = Field(default=50 * 1024 * 1024)  # 50MB
+    MAX_FILE_SIZE: int = Field(default=5 * 1024 * 1024 * 1024)  # 5GB for D&D session recordings
     UPLOAD_DIR: str = Field(default="uploads")
 
     # Audio processing settings (stored as comma-separated string, parsed to list)
@@ -72,6 +76,19 @@ class Settings(BaseSettings):
     DB_MAX_OVERFLOW: int = Field(default=10)
     DB_POOL_TIMEOUT: int = Field(default=30)
     DB_POOL_RECYCLE: int = Field(default=3600)  # 1 hour
+
+    # Logging settings
+    LOG_LEVEL: str = Field(default="INFO")
+    LOG_FILE: Optional[str] = Field(default=None)
+
+    # Health check settings
+    HEALTH_CHECK_ENDPOINT: str = Field(default="/health")
+    HEALTH_CHECK_TIMEOUT: int = Field(default=10)
+
+    # Socket.IO settings
+    SOCKETIO_PING_INTERVAL: int = Field(default=25000)  # 25 seconds
+    SOCKETIO_PING_TIMEOUT: int = Field(default=20000)   # 20 seconds
+    SOCKETIO_MAX_HTTP_BUFFER_SIZE: int = Field(default=1000000)  # 1MB
 
     model_config = ConfigDict(
         env_file=_get_env_files(),

@@ -290,10 +290,11 @@ health_checker = HealthChecker()
 async def check_database_connection():
     """Check database connectivity."""
     try:
+        from sqlalchemy import text
         from app.models.database import engine
 
         async with engine.begin() as conn:
-            await conn.execute("SELECT 1")
+            await conn.execute(text("SELECT 1"))
         return True
     except Exception as e:
         logger.error(f"Database health check failed: {e}")

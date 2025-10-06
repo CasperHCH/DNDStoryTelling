@@ -1,0 +1,8 @@
+<!-- Simple HTML to generate a favicon via data URI -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <circle cx="16" cy="16" r="15" fill="#1e40af"/>
+  <polygon points="16,4 22,10 16,16 10,10" fill="#fbbf24"/>
+  <polygon points="16,16 22,10 25,16 16,22" fill="#f59e0b"/>
+  <polygon points="16,16 16,22 7,16 10,10" fill="#d97706"/>
+  <circle cx="14" cy="9" r="1.5" fill="#fef3c7"/>
+</svg>

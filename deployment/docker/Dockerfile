@@ -33,15 +33,18 @@ COPY requirements.txt .
 COPY testing/test-requirements.txt ./testing/
 RUN pip install -r requirements.txt \
     && pip install -r testing/test-requirements.txt \
-    && pip install playwright ffmpeg-python asyncpg \
-    && playwright install chromium --with-deps \
+    && pip install ffmpeg-python asyncpg \
     && rm -rf /root/.cache/pip
 
 # Copy application code
 COPY . .
 
-# Create necessary directories
-RUN mkdir -p /app/static /app/templates /data
+# Create necessary directories with proper permissions
+RUN mkdir -p /app/static /app/templates /data \
+    && mkdir -p /app/.pytest_cache \
+    && chmod -R 755 /app \
+    && chmod -R 777 /app/.pytest_cache \
+    && chmod -R 777 /data
 
 # Set Python path
 ENV PYTHONPATH=/app
@@ -61,5 +64,5 @@ EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:8000/health || exit 1
 
-# Start the application
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Start the application using the configurable startup script
+CMD ["python", "scripts/start_server.py"]

@@ -20,11 +20,12 @@ services:
       db:
         condition: service_healthy
     volumes:
-      - ../../:/app
-      - ../../alembic.ini:/app/alembic.ini
-      - ../../alembic:/app/alembic
+      - ../../:/app:cached
+      - ../../alembic.ini:/app/alembic.ini:ro
+      - ../../alembic:/app/alembic:ro
       - app_uploads:/app/uploads
       - app_logs:/app/logs
+      - app_cache:/app/.pytest_cache
     working_dir: /app
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
@@ -88,3 +89,4 @@ volumes:
   redis_data:
   app_uploads:
   app_logs:
+  app_cache:

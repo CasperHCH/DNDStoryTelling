@@ -99,9 +99,165 @@ button:disabled {
 
 /* File upload styling */
 #drop-zone {
-    transition: all 0.2s ease;
+    transition: all 0.3s ease;
 }
 
 #drop-zone:hover {
     background-color: rgba(59, 130, 246, 0.05);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+}
+
+/* Improved button styling */
+button {
+    transition: all 0.2s ease;
+}
+
+/* Configuration section styling */
+#config-fields {
+    transition: all 0.3s ease;
+}
+
+/* Welcome message styling */
+.welcome-message {
+    animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Theme toggle improvement */
+#theme-toggle {
+    transition: all 0.2s ease;
+}
+
+#theme-toggle:hover {
+    transform: scale(1.05);
+}
+
+/* Custom dark mode styles to ensure it works */
+.dark {
+    color-scheme: dark;
+}
+
+/* Dark mode properly configured */
+
+/* Strong override for body background */
+html.dark,
+html.dark body {
+    background: linear-gradient(45deg, #1a1a2e, #16213e) !important;
+}
+
+/* Main body and background */
+html.dark,
+html.dark body,
+.dark body {
+    background-color: #111827 !important; /* gray-900 */
+    color: #ffffff !important;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* White containers become dark */
+html.dark .bg-white,
+.dark .bg-white {
+    background-color: #1f2937 !important; /* gray-800 */
+    color: #ffffff !important;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Gray backgrounds */
+html.dark .bg-gray-100,
+.dark .bg-gray-100 {
+    background-color: #111827 !important; /* gray-900 */
+    transition: background-color 0.3s ease;
+}
+
+html.dark .bg-gray-800,
+.dark .bg-gray-800 {
+    background-color: #1f2937 !important; /* Keep consistent */
+    transition: background-color 0.3s ease;
+}
+
+/* Text colors */
+html.dark .text-gray-700,
+html.dark .text-gray-600,
+html.dark label,
+.dark .text-gray-700,
+.dark .text-gray-600,
+.dark label {
+    color: #d1d5db !important; /* gray-300 */
+    transition: color 0.3s ease;
+}
+
+.dark .text-gray-500,
+.dark .text-gray-400 {
+    color: #9ca3af !important; /* gray-400 */
+}
+
+.dark .text-gray-800 {
+    color: #ffffff !important;
+}
+
+/* Form inputs */
+.dark input,
+.dark textarea {
+    background-color: #374151 !important; /* gray-700 */
+    border-color: #4b5563 !important; /* gray-600 */
+    color: #ffffff !important;
+}
+
+.dark input::placeholder,
+.dark textarea::placeholder {
+    color: #9ca3af !important; /* gray-400 */
+}
+
+/* Borders */
+.dark .border-gray-300,
+.dark .border {
+    border-color: #4b5563 !important; /* gray-600 */
+}
+
+/* Chat area */
+.dark #chat-messages {
+    background-color: #111827 !important; /* gray-900 */
+    border-color: #4b5563 !important; /* gray-600 */
+}
+
+/* Drop zone */
+.dark #drop-zone {
+    border-color: #4b5563 !important; /* gray-600 */
+    background-color: transparent !important;
+}
+
+.dark #drop-zone:hover {
+    border-color: #3b82f6 !important; /* blue-500 */
+    background-color: #1e3a8a !important; /* blue-900 */
+}
+
+/* Progress bars */
+.dark .bg-gray-200 {
+    background-color: #4b5563 !important; /* gray-600 */
+}
+
+/* Message types in chat */
+.dark .bg-blue-100 {
+    background-color: #1e3a8a !important; /* blue-900 */
+    color: #ffffff !important;
+}
+
+.dark .bg-gray-100 {
+    background-color: #374151 !important; /* gray-700 */
+    color: #ffffff !important;
+}
+
+.dark .bg-red-100 {
+    background-color: #7f1d1d !important; /* red-900 */
+    color: #ffffff !important;
+}
+
+.dark .bg-green-100 {
+    background-color: #14532d !important; /* green-900 */
+    color: #ffffff !important;
 }

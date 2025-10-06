@@ -30,13 +30,13 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         )
 
         # Content Security Policy (CSP)
-        # Note: Adjust based on your actual needs
+        # Allow external CDN resources for Tailwind CSS and Socket.IO
         csp_policy = (
             "default-src 'self'; "
-            "script-src 'self' 'unsafe-inline' 'unsafe-eval'; "
-            "style-src 'self' 'unsafe-inline'; "
+            "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.socket.io; "
+            "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://unpkg.com; "
             "img-src 'self' data: https:; "
-            "font-src 'self'; "
+            "font-src 'self' https://cdn.jsdelivr.net https://unpkg.com; "
             "connect-src 'self' ws: wss:; "
             "frame-ancestors 'none';"
         )

@@ -1,0 +1,174 @@
+D&D Campaign Session #27: "The Siege of Thornwall Keep"
+Date: October 6, 2025
+DM: Alex
+Players: Sarah (Lyralei the Elven Ranger), Mike (Thorgrim the Dwarven Cleric), Emma (Zara the Halfling Rogue), Chris (Eldric the Human Wizard)
+
+=== SESSION RECAP ===
+
+The party approached Thornwall Keep at dawn, the ancient fortress shrouded in an unnatural fog. Intelligence gathered from refugees suggested that the necromancer Valdris had taken control of the keep and was raising an undead army within its walls.
+
+=== OPENING SCENE ===
+
+DM: "As you crest the hill overlooking Thornwall Keep, you see the massive stone fortress surrounded by a writhing, green-tinged fog. The usual banners are gone, replaced by tattered black cloth that snaps ominously in the wind. Roll for perception."
+
+Sarah (Lyralei): "Natural 20! What do I see?"
+
+DM: "With your keen elven eyes, you notice movement along the battlements - but the figures move with an unnatural, jerky gait. Definitely undead. You also spot what looks like a breach in the eastern wall, partially hidden by the fog."
+
+Mike (Thorgrim): "By Moradin's beard! We need to get closer to assess the situation. I cast Detect Evil and Good."
+
+DM: "The spell reveals an overwhelming presence of undead throughout the keep. You estimate at least 50-60 undead creatures of various types."
+
+=== TACTICAL PLANNING ===
+
+Emma (Zara): "I suggest we use the breach in the eastern wall. I can scout ahead with my stealth."
+
+Chris (Eldric): "Good idea. I can cast Invisibility on you for extra protection. We should also prepare for a lot of Turn Undead usage, Thorgrim."
+
+Mike (Thorgrim): "Aye, I've got three uses prepared. Let me also cast Bless on the party before we move in."
+
+Sarah (Lyralei): "I'll keep Hunter's Mark ready and watch for aerial threats. My wolf companion can help flank any grouped enemies."
+
+=== THE BREACH ASSAULT ===
+
+DM: "Zara, make a Stealth check as you approach the breach."
+
+Emma (Zara): "18 total."
+
+DM: "You successfully reach the breach undetected. Through the gap, you see the courtyard filled with shambling zombies and two towering zombie ogres near the main keep entrance. What do you do?"
+
+Emma (Zara): "I signal the party and point out the two big threats. Then I'll ready my shortbow for a sneak attack."
+
+=== COMBAT ENCOUNTER 1: COURTYARD BATTLE ===
+
+DM: "Roll for initiative! The party is 60 feet from the nearest zombies."
+
+Initiative Order:
+1. Lyralei (Ranger) - 19
+2. Zara (Rogue) - 17
+3. Eldric (Wizard) - 15
+4. Zombie Ogre Alpha - 12
+5. Thorgrim (Cleric) - 11
+6. Zombies (x8) - 8
+7. Zombie Ogre Beta - 6
+
+ROUND 1:
+
+Sarah (Lyralei): "I cast Hunter's Mark on the Alpha ogre and fire two arrows with my longbow."
+*Rolls* "First shot: 16 to hit, 12 damage. Second shot: Natural 20! That's... 18 damage total."
+
+DM: "Both arrows find their mark. The zombie ogre staggers but keeps advancing."
+
+Emma (Zara): "I move to get advantage from cover and fire with sneak attack."
+*Rolls* "19 to hit, and that's 16 damage with sneak attack!"
+
+Chris (Eldric): "I'm casting Fireball centered on the group of regular zombies."
+*Rolls* "DC 15 Dexterity save."
+
+DM: "Most of the zombies fail their saves. Roll damage."
+
+Chris (Eldric): "28 fire damage! How many drop?"
+
+DM: "Six of the eight zombies are incinerated instantly. The courtyard fills with the stench of burning undead flesh."
+
+=== MID-COMBAT COMPLICATIONS ===
+
+DM: "As the zombie ogre Alpha charges forward, you hear a bone-chilling howl from the keep's tower. A wraith phases through the stone wall, its eyes glowing with malevolent hatred."
+
+Mike (Thorgrim): "A wraith?! That's bad news. I'll use Turn Undead!"
+*Rolls* "That's a 14. Does it affect the wraith?"
+
+DM: "The wraith resists your turning, but the remaining zombies flee in terror. However, the zombie ogres are too powerful to be affected."
+
+Sarah (Lyralei): "We need to focus fire! I'm switching Hunter's Mark to the wraith and firing magic arrows."
+
+=== DRAMATIC MOMENTS ===
+
+Emma (Zara): "I want to try something crazy. Can I use my grappling hook to swing up to the wraith's level?"
+
+DM: "That's... actually brilliant. Roll an Athletics check with advantage for creativity."
+
+Emma (Zara): "17! I'm swinging up like a fantasy Spider-Man!"
+
+DM: "You successfully swing up and are now within melee range of the wraith. It looks surprised - if undead can look surprised."
+
+Chris (Eldric): "While she's distracting it, I'll cast Magic Missile at 4th level!"
+*Rolls* "Six missiles for... 26 force damage total!"
+
+DM: "The wraith shrieks as the magical energy tears through its ethereal form. It's looking badly wounded."
+
+=== THORGRIM'S HEROIC MOMENT ===
+
+Mike (Thorgrim): "The ogre is almost on me. I'm going to do something my ancestors would be proud of."
+
+DM: "What's your plan?"
+
+Mike (Thorgrim): "I cast Spiritual Weapon to summon a spectral warhammer, then I charge the ogre with my own hammer raised high, shouting a dwarven war cry!"
+
+DM: "Roll for the charge attack with inspiration for the epic roleplay."
+
+Mike (Thorgrim): "Natural 20 on the attack! And... 24 damage with my hammer, plus 12 from Spiritual Weapon!"
+
+DM: "Your hammer glows with divine light as it crushes into the zombie ogre's skull. The creature collapses in a heap of rotting flesh and broken bones. The courtyard battle is won!"
+
+=== EXPLORING THE KEEP ===
+
+DM: "With the courtyard secured, you have several options: the main entrance to the keep, a side door that might lead to the kitchens, or stairs leading up to the battlements."
+
+Sarah (Lyralei): "Let's check the battlements first. I want to get a view of the entire keep layout."
+
+DM: "Smart thinking. As you climb the stone steps, you notice fresh scratches in the stone - claw marks from something large."
+
+Emma (Zara): "I'll check for traps on the stairs."
+*Rolls* "Investigation... 16."
+
+DM: "You spot a pressure plate about halfway up. It looks like it would trigger some kind of mechanism."
+
+Chris (Eldric): "Can I disable it with Mage Hand?"
+
+DM: "Clever! Roll an Arcana check."
+
+Chris (Eldric): "15. Success?"
+
+DM: "Yes! You carefully manipulate the pressure plate with your magical hand, and hear a grinding sound as a mechanism resets. The trap is disabled."
+
+=== THE TOWER REVELATION ===
+
+DM: "From the battlements, you can see into the keep's central tower. Through a large window, you spot Valdris the necromancer performing some kind of ritual over a glowing green crystal."
+
+Mike (Thorgrim): "That must be how he's controlling so many undead! We need to stop that ritual."
+
+Sarah (Lyralei): "I could try to shoot him through the window, but it's a difficult shot."
+
+Emma (Zara): "What if we create a distraction? I could try to sneak around to another entrance while you make noise here."
+
+Chris (Eldric): "Or I could use Misty Step to teleport directly into the tower room and disrupt the ritual!"
+
+=== THE FINAL CONFRONTATION SETUP ===
+
+DM: "As you debate your approach, Valdris suddenly stops his chanting and turns toward your location. His hollow voice echoes across the courtyard: 'So... living fools dare to enter my domain. Very well. Let me show you the true power of death!'"
+
+Mike (Thorgrim): "Here we go! Everyone ready your strongest spells and abilities!"
+
+DM: "The green crystal pulses brighter, and you see shadows moving throughout the keep. Valdris has awakened his entire undead army. This is going to be the fight of your lives!"
+
+=== POST-SESSION NOTES ===
+
+- Excellent tactical planning by the party
+- Great roleplay moments, especially Thorgrim's charge and Zara's grappling hook swing
+- The wraith encounter added good tension without being overwhelming
+- Players are excited about the upcoming boss fight with Valdris
+- Need to prepare stat blocks for the final confrontation next session
+
+=== LOOT GAINED ===
+- 320 gold pieces from the zombies' former lives
+- A +1 Ring of Protection found in the courtyard rubble
+- Potion of Greater Healing discovered in the guard tower
+
+=== EXPERIENCE POINTS ===
+Each character gains 1,250 XP for excellent combat tactics, creative problem-solving, and outstanding roleplay.
+
+=== NEXT SESSION PREVIEW ===
+The final confrontation with Valdris the Necromancer awaits! Will our heroes stop his ritual and save the realm, or will they become the newest additions to his undead army? Find out next time in "The Heart of Darkness"!
+
+--- END OF SESSION LOG ---

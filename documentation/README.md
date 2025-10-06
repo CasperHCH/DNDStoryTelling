@@ -2,6 +2,8 @@
 
 Welcome to the comprehensive documentation for the D&D Story Telling application.
 
+> **Status**: ✅ Production Ready | ✅ Fully Tested | ✅ Security Hardened | ✅ Docker Optimized
+
 ## 📋 Quick Navigation
 
 ### 🚀 Getting Started
@@ -12,16 +14,14 @@ Welcome to the comprehensive documentation for the D&D Story Telling application
 ### 🔧 Configuration & Setup
 - **[Deployment Checklist](DEPLOYMENT-CHECKLIST.md)** - Pre-deployment verification steps
 - **[NAS Deployment](NAS-DEPLOYMENT.md)** - Deployment on NAS systems (Synology, QNAP)
-- **[Docker Packaging](DOCKER-PACKAGING.md)** - Creating and distributing Docker packages
 
 ### 👥 Development
 - **[Contributing Guide](CONTRIBUTING.md)** - Development setup and contribution guidelines
 - **[UI Documentation](UI.md)** - Interface components and design system
 
 ### 🔍 Troubleshooting & Maintenance
-- **[GitHub Actions Troubleshooting](GITHUB-ACTIONS-TROUBLESHOOTING.md)** - CI/CD workflow issues and solutions
-- **[GitHub Actions Fixes Summary](GITHUB-ACTIONS-FIXES-SUMMARY.md)** - Complete summary of workflow fixes
-- **[Docker Improvements Summary](DOCKER-IMPROVEMENTS-SUMMARY.md)** - Recent Docker enhancements
+- **[Docker Setup Guide](README-Docker.md)** - Includes troubleshooting section
+- **[Deployment Guide](DEPLOYMENT.md)** - Production troubleshooting and monitoring
 
 ## 📂 Project Structure Reference
 
@@ -49,19 +49,15 @@ DNDStoryTelling/
 
 **🏠 Deploy on NAS**
 1. [NAS Deployment Guide](NAS-DEPLOYMENT.md)
-2. [Docker Packaging Guide](DOCKER-PACKAGING.md)
+2. [Deployment Checklist](DEPLOYMENT-CHECKLIST.md)
 
 **💻 Develop/Contribute**
 1. [Contributing Guide](CONTRIBUTING.md)
 2. [UI Documentation](UI.md)
 
 **🔧 Troubleshoot Issues**
-1. [GitHub Actions Troubleshooting](GITHUB-ACTIONS-TROUBLESHOOTING.md)
-2. [Docker Setup Guide](README-Docker.md) (troubleshooting section)
-
-**📦 Create Packages**
-1. [Docker Packaging Guide](DOCKER-PACKAGING.md)
-2. [Deployment Guide](DEPLOYMENT.md)
+1. [Docker Setup Guide](README-Docker.md) (troubleshooting section)
+2. [Deployment Guide](DEPLOYMENT.md) (production troubleshooting)
 
 ## 🔄 Recent Updates
 

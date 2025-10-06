@@ -14,17 +14,40 @@ class StoryGenerator:
 
     async def generate_story(self, text: str, context) -> str:
         prompt = self._create_prompt(text, context)
-        response = await self.client.chat.completions.create(
-            model="gpt-4-turbo-preview",
-            messages=[
-                {
-                    "role": "system",
-                    "content": "You are a creative writer specializing in D&D campaign narratives.",
-                },
-                {"role": "user", "content": prompt},
-            ],
-        )
-        return response.choices[0].message.content
+
+        # Try models in order of preference (newest to older)
+        models_to_try = ["gpt-4o", "gpt-4", "gpt-4-turbo"]
+
+        for model in models_to_try:
+            try:
+                response = await self.client.chat.completions.create(
+                    model=model,
+                    messages=[
+                        {
+                            "role": "system",
+                            "content": "You are a creative writer specializing in D&D campaign narratives.",
+                        },
+                        {"role": "user", "content": prompt},
+                    ],
+                    max_tokens=2000,
+                    temperature=0.7
+                )
+                return response.choices[0].message.content
+            except Exception as e:
+                error_msg = str(e).lower()
+                if "model" in error_msg and "not found" in error_msg:
+                    continue  # Try next model
+                elif "quota" in error_msg or "insufficient_quota" in error_msg or "429" in str(e):
+                    # Quota exceeded - provide clear error message
+                    raise Exception(f"OpenAI quota exceeded (Error 429). Please check your plan and billing details at https://platform.openai.com/account/billing")
+                elif "401" in str(e) or "authentication" in error_msg:
+                    # Authentication error
+                    raise Exception("OpenAI API key authentication failed. Please check your API key.")
+                else:
+                    raise e  # Re-raise other errors
+
+        # If all models fail, raise the last error
+        raise Exception(f"None of the available models ({', '.join(models_to_try)}) are accessible with your API key. Please check your OpenAI account and subscription.")
 
     def _create_prompt(self, text: str, context) -> str:
         # Handle both dict and StoryContext model

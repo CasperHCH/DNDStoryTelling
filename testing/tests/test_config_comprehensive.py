@@ -10,13 +10,13 @@ class TestSettings:
     """Test configuration settings."""
 
     def test_default_settings(self):
-        """Test default configuration values.""" 
+        """Test default configuration values."""
         with patch.dict(os.environ, {
             'DATABASE_URL': 'sqlite:///test.db',
             'SECRET_KEY': 'test-secret-key-that-is-long-enough-for-validation'
         }):
             settings = Settings()
-            
+
             # Test default values that exist in the actual Settings class
             assert settings.APP_NAME == "D&D Story Telling"
             assert settings.VERSION == "1.0.0"
@@ -37,7 +37,7 @@ class TestSettings:
             'ENVIRONMENT': 'production'
         }):
             settings = Settings()
-            
+
             assert settings.DEBUG is True
             assert 'postgresql+asyncpg://' in settings.DATABASE_URL  # Should be converted to async
             assert settings.SECRET_KEY == 'test-secret-key-that-is-long-enough-for-validation-here'
@@ -64,7 +64,7 @@ class TestSettings:
         }):
             settings = Settings()
             assert settings.ALLOWED_HOSTS == 'host1.com,host2.com,host3.com'
-            
+
             # Test the property method
             hosts = settings.allowed_hosts_list
             assert 'host1.com' in hosts
@@ -91,7 +91,7 @@ class TestSettings:
             'SECRET_KEY': 'test-secret-key-that-is-long-enough-for-validation'
         }):
             settings = Settings()
-            
+
             assert settings.OPENAI_API_KEY == 'sk-test123'
             assert settings.CONFLUENCE_API_TOKEN == 'conf-token-123'
             assert settings.CONFLUENCE_URL == 'https://company.atlassian.net'
@@ -106,7 +106,7 @@ class TestSettings:
             'SECRET_KEY': 'test-secret-key-that-is-long-enough-for-validation'
         }):
             settings = Settings()
-            
+
             assert settings.MAX_FILE_SIZE == 10485760
             assert settings.UPLOAD_DIR == 'custom_uploads'
             assert settings.SUPPORTED_AUDIO_FORMATS == 'mp3,wav,m4a'
@@ -117,15 +117,15 @@ class TestSettings:
             'DATABASE_URL': 'sqlite:///test.db',
             'SECRET_KEY': 'test-secret-key-that-is-long-enough-for-validation'
         }
-        
+
         # Test true values
         for true_val in ['true', 'True', 'TRUE', '1']:
             env = {**base_env, 'DEBUG': true_val}
             with patch.dict(os.environ, env):
                 settings = Settings()
                 assert settings.DEBUG is True
-        
-        # Test false values  
+
+        # Test false values
         for false_val in ['false', 'False', 'FALSE', '0']:
             env = {**base_env, 'DEBUG': false_val}
             with patch.dict(os.environ, env):
@@ -136,7 +136,7 @@ class TestSettings:
         """Test that get_settings returns the same instance."""
         settings1 = get_settings()
         settings2 = get_settings()
-        
+
         assert settings1 is settings2
 
     def test_cors_origins_configuration(self):
@@ -168,7 +168,7 @@ class TestSettings:
             'DB_MAX_OVERFLOW': '20',
             'DB_POOL_TIMEOUT': '60',
             'DB_POOL_RECYCLE': '7200',
-            'DATABASE_URL': 'sqlite:///test.db',  
+            'DATABASE_URL': 'sqlite:///test.db',
             'SECRET_KEY': 'test-secret-key-that-is-long-enough-for-validation'
         }):
             settings = Settings()
@@ -196,7 +196,7 @@ class TestSettings:
         }):
             settings = Settings()
             assert settings.SUPPORTED_AUDIO_FORMATS == 'mp3,wav,flac,ogg'
-            
+
             # Test the property method
             formats = settings.supported_audio_formats_list
             assert 'mp3' in formats

@@ -3,75 +3,443 @@
 {% block title %}Home{% endblock %}
 
 {% block content %}
-<div class="flex flex-col gap-4">
-    <!-- Configuration Area - Now at the top -->
-    <div class="bg-white p-4 rounded-lg shadow-md dark:bg-gray-800 dark:text-white transition-colors">
-        <div class="flex justify-between items-center mb-2">
-            <h2 class="font-bold">Configuration</h2>
-            <button id="toggle-config" class="text-blue-500 dark:text-blue-400 hover:underline text-sm">Show/Hide</button>
+<!-- Hero Section -->
+<div class="bg-gradient-to-br from-blue-600 to-purple-700 dark:from-blue-800 dark:to-purple-900 text-white p-8 rounded-lg shadow-lg mb-8">
+    <div class="max-w-4xl mx-auto text-center">
+        <h1 class="text-4xl font-bold mb-4">🎲 Transform Your D&D Sessions</h1>
+        <p class="text-xl mb-6 text-blue-100">Upload your audio recordings and let AI create compelling story summaries</p>
+        <div class="flex justify-center items-center gap-4 text-sm">
+            <div class="flex items-center gap-2 bg-white bg-opacity-20 px-3 py-1 rounded-full">
+                <span class="text-green-300">✓</span>
+                <span>Audio Processing</span>
+            </div>
+            <div class="flex items-center gap-2 bg-white bg-opacity-20 px-3 py-1 rounded-full">
+                <span class="text-green-300">✓</span>
+                <span>AI Story Generation</span>
+            </div>
+            <div class="flex items-center gap-2 bg-white bg-opacity-20 px-3 py-1 rounded-full">
+                <span class="text-green-300">✓</span>
+                <span>Confluence Export</span>
+            </div>
         </div>
-        <div id="config-fields" class="flex flex-wrap items-center gap-3">
-            <div class="flex-1 min-w-[200px]">
-                <label for="confluence-url" class="block text-xs font-medium text-gray-700">Confluence URL</label>
-                <input type="text" id="confluence-url" class="mt-1 p-1 border rounded w-full text-sm" placeholder="https://your-domain.atlassian.net">
+    </div>
+</div>
+
+<!-- Workflow Steps -->
+<div class="mb-8">
+    <div class="flex justify-center mb-6">
+        <div class="flex items-center gap-4 bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md">
+            <div class="flex items-center gap-2">
+                <div class="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center text-sm font-bold">1</div>
+                <span class="text-sm font-medium dark:text-white">Upload File</span>
             </div>
-            <div class="flex-1 min-w-[200px]">
-                <label for="confluence-api-token" class="block text-xs font-medium text-gray-700">Confluence API Token</label>
-                <input type="text" id="confluence-api-token" class="mt-1 p-1 border rounded w-full text-sm" placeholder="Your API Token">
+            <div class="text-gray-400">→</div>
+            <div class="flex items-center gap-2">
+                <div class="w-8 h-8 bg-gray-300 dark:bg-gray-600 text-white rounded-full flex items-center justify-center text-sm font-bold">2</div>
+                <span class="text-sm font-medium dark:text-white">Process</span>
             </div>
-            <div class="flex-1 min-w-[200px]">
-                <label for="confluence-parent-page-id" class="block text-xs font-medium text-gray-700">Confluence Parent Page ID</label>
-                <input type="text" id="confluence-parent-page-id" class="mt-1 p-1 border rounded w-full text-sm" placeholder="123456789">
+            <div class="text-gray-400">→</div>
+            <div class="flex items-center gap-2">
+                <div class="w-8 h-8 bg-gray-300 dark:bg-gray-600 text-white rounded-full flex items-center justify-center text-sm font-bold">3</div>
+                <span class="text-sm font-medium dark:text-white">Generate Story</span>
             </div>
-            <div class="flex-1 min-w-[200px]">
-                <label for="openai-api-key" class="block text-xs font-medium text-gray-700">OpenAI API Key</label>
-                <input type="text" id="openai-api-key" class="mt-1 p-1 border rounded w-full text-sm" placeholder="sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx">
+        </div>
+    </div>
+</div>
+
+<div class="flex flex-col gap-6">
+    <!-- Configuration Panel - Collapsible -->
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden transition-colors">
+        <button id="toggle-config" class="w-full flex justify-between items-center p-4 text-left hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+            <div class="flex items-center gap-3">
+                <span class="text-2xl">⚙️</span>
+                <div>
+                    <h2 class="text-lg font-bold dark:text-white">Configuration</h2>
+                    <p class="text-sm text-gray-600 dark:text-gray-400">Set up your API keys and integration settings</p>
+                </div>
             </div>
-            <div class="flex items-end">
-                <button type="button" id="save-config-btn" class="bg-blue-500 text-white px-3 py-1 rounded text-sm hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700">Save</button>
+            <div class="flex items-center gap-2">
+                <span id="config-status" class="text-xs px-2 py-1 rounded-full bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">Not Configured</span>
+                <svg id="config-chevron" class="w-5 h-5 text-gray-500 dark:text-gray-400 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
+            </div>
+        </button>
+        <div id="config-fields" class="p-4 border-t border-gray-200 dark:border-gray-700 hidden">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <div class="flex items-center justify-between mb-2">
+                        <label for="openai-api-key" class="block text-sm font-medium text-gray-700 dark:text-gray-300">OpenAI API Key *</label>
+                        <button type="button" onclick="toggleInfoGuide('openai-guide')" class="text-blue-500 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors" title="How to get OpenAI API Key">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </button>
+                    </div>
+                    <input type="password" id="openai-api-key" class="w-full p-3 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx">
+                    <div id="openai-guide" class="hidden mt-3 p-4 bg-blue-50 dark:bg-blue-900 rounded-lg border border-blue-200 dark:border-blue-700">
+                        <h4 class="text-sm font-semibold text-blue-800 dark:text-blue-200 mb-2">📝 How to get your OpenAI API Key:</h4>
+                        <ol class="text-xs text-blue-700 dark:text-blue-300 space-y-1 list-decimal list-inside">
+                            <li>Go to <a href="https://platform.openai.com/api-keys" target="_blank" class="underline hover:text-blue-900 dark:hover:text-blue-100">platform.openai.com/api-keys</a></li>
+                            <li>Sign up or log into your OpenAI account</li>
+                            <li>Click "Create new secret key"</li>
+                            <li>Copy the key (starts with 'sk-') and paste it here</li>
+                        </ol>
+                        <p class="text-xs text-blue-600 dark:text-blue-400 mt-2">💡 Note: You'll need to add billing information to use the API</p>
+                    </div>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Required for AI story generation</p>
+                </div>
+                <div>
+                    <div class="flex items-center justify-between mb-2">
+                        <label for="confluence-url" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Confluence URL</label>
+                        <button type="button" onclick="toggleInfoGuide('confluence-url-guide')" class="text-green-500 hover:text-green-700 dark:text-green-400 dark:hover:text-green-300 transition-colors" title="How to find your Confluence URL">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </button>
+                    </div>
+                    <input type="text" id="confluence-url" class="w-full p-3 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="https://your-domain.atlassian.net">
+                    <div id="confluence-url-guide" class="hidden mt-3 p-4 bg-green-50 dark:bg-green-900 rounded-lg border border-green-200 dark:border-green-700">
+                        <h4 class="text-sm font-semibold text-green-800 dark:text-green-200 mb-2">🌐 How to find your Confluence URL:</h4>
+                        <ol class="text-xs text-green-700 dark:text-green-300 space-y-1 list-decimal list-inside">
+                            <li>Open your Confluence workspace in a browser</li>
+                            <li>Look at the URL in your address bar</li>
+                            <li>Copy everything up to ".atlassian.net"</li>
+                            <li>Example: https://yourcompany.atlassian.net</li>
+                        </ol>
+                        <p class="text-xs text-green-600 dark:text-green-400 mt-2">💡 For Confluence Server: Use your server URL (e.g., https://confluence.yourcompany.com)</p>
+                    </div>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Optional: For exporting stories</p>
+                </div>
+                <div>
+                    <div class="flex items-center justify-between mb-2">
+                        <label for="confluence-api-token" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Confluence API Token</label>
+                        <button type="button" onclick="toggleInfoGuide('confluence-token-guide')" class="text-purple-500 hover:text-purple-700 dark:text-purple-400 dark:hover:text-purple-300 transition-colors" title="How to create Confluence API Token">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </button>
+                    </div>
+                    <input type="password" id="confluence-api-token" class="w-full p-3 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Your API Token">
+                    <div id="confluence-token-guide" class="hidden mt-3 p-4 bg-purple-50 dark:bg-purple-900 rounded-lg border border-purple-200 dark:border-purple-700">
+                        <h4 class="text-sm font-semibold text-purple-800 dark:text-purple-200 mb-2">🔐 How to create a Confluence API Token:</h4>
+                        <ol class="text-xs text-purple-700 dark:text-purple-300 space-y-1 list-decimal list-inside">
+                            <li>Go to <a href="https://id.atlassian.com/manage-profile/security/api-tokens" target="_blank" class="underline hover:text-purple-900 dark:hover:text-purple-100">id.atlassian.com/manage-profile/security/api-tokens</a></li>
+                            <li>Log in with your Atlassian account</li>
+                            <li>Click "Create API token"</li>
+                            <li>Give it a label (e.g., "D&D Story Tool")</li>
+                            <li>Copy the generated token and paste it here</li>
+                        </ol>
+                        <p class="text-xs text-purple-600 dark:text-purple-400 mt-2">⚠️ Keep this token secure - treat it like a password!</p>
+                    </div>
+                </div>
+                <div>
+                    <div class="flex items-center justify-between mb-2">
+                        <label for="confluence-parent-page-id" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Confluence Parent Page ID</label>
+                        <button type="button" onclick="toggleInfoGuide('confluence-page-guide')" class="text-orange-500 hover:text-orange-700 dark:text-orange-400 dark:hover:text-orange-300 transition-colors" title="How to find Confluence Page ID">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </button>
+                    </div>
+                    <input type="text" id="confluence-parent-page-id" class="w-full p-3 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="123456789">
+                    <div id="confluence-page-guide" class="hidden mt-3 p-4 bg-orange-50 dark:bg-orange-900 rounded-lg border border-orange-200 dark:border-orange-700">
+                        <h4 class="text-sm font-semibold text-orange-800 dark:text-orange-200 mb-2">📄 How to find a Confluence Page ID:</h4>
+                        <ol class="text-xs text-orange-700 dark:text-orange-300 space-y-1 list-decimal list-inside">
+                            <li>Navigate to the parent page in Confluence</li>
+                            <li>Look at the URL in your browser</li>
+                            <li>Find the number after "pageId=" or "/pages/"</li>
+                            <li>Example: .../pages/123456789/Page+Title</li>
+                            <li>Copy that number (123456789) and paste it here</li>
+                        </ol>
+                        <p class="text-xs text-orange-600 dark:text-orange-400 mt-2">💡 This determines where new story pages will be created</p>
+                    </div>
+                </div>
+            </div>
+            <div class="flex items-center justify-between mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
+                <div class="flex items-center gap-3">
+                    <button type="button" id="save-config-btn" class="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium">
+                        <span class="config-btn-text">Save Configuration</span>
+                        <span class="config-loading hidden">Saving...</span>
+                    </button>
+                    <button type="button" id="clear-config-btn" class="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 px-4 py-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900 transition-colors" title="Clear all configuration">Clear</button>
+                </div>
+                <button type="button" id="toggle-socket-btn" class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 dark:bg-gray-600 dark:hover:bg-gray-700 transition-colors text-sm" title="Toggle chat functionality">Chat: ON</button>
             </div>
         </div>
     </div>
 
-    <!-- Main Content Area - File Upload and Chat -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <!-- File Upload Area - Now smaller on the left -->
-        <div class="bg-white p-4 rounded-lg shadow-md dark:bg-gray-800 dark:text-white transition-colors">
-            <h2 class="text-lg font-bold mb-2">Upload File</h2>
-            <div id="drop-zone" class="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-6 text-center hover:border-blue-500 dark:hover:border-blue-400 transition-colors">
-                <p class="text-gray-500 text-sm">Drag and drop your file here</p>
-                <p class="text-gray-400 text-xs mb-2">or</p>
-                <input type="file" id="file-input" class="hidden" accept=".txt,.mp3,.wav">
-                <button onclick="document.getElementById('file-input').click()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 text-sm">
-                    Select File
+    <!-- Main Content Area - Balanced Layout -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- File Upload Area - Now more prominent -->
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 transition-colors">
+            <div class="flex items-center gap-3 mb-6">
+                <div class="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold">1</div>
+                <div>
+                    <h2 class="text-xl font-bold dark:text-white">Upload Your Session</h2>
+                    <p class="text-sm text-gray-600 dark:text-gray-400">Audio recordings or text files</p>
+                </div>
+            </div>
+
+            <div id="drop-zone" class="border-3 border-dashed border-blue-300 dark:border-blue-600 rounded-xl p-12 text-center hover:border-blue-500 dark:hover:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900 transition-all duration-300 cursor-pointer group bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900 dark:to-indigo-900">
+                <div class="text-6xl mb-4 group-hover:scale-110 transition-transform duration-300">🎤</div>
+                <h3 class="text-lg font-semibold text-gray-800 dark:text-white mb-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">Drop your D&D session here</h3>
+                <p class="text-gray-600 dark:text-gray-400 mb-2">or click to browse files</p>
+                <p class="text-xs text-gray-500 dark:text-gray-500 mb-4">Supports files up to 5GB for full session recordings</p>
+                <div class="flex flex-wrap justify-center gap-2 mb-4">
+                    <span class="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300 px-3 py-1 rounded-full text-xs">MP3</span>
+                    <span class="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300 px-3 py-1 rounded-full text-xs">WAV</span>
+                    <span class="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300 px-3 py-1 rounded-full text-xs">M4A</span>
+                    <span class="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300 px-3 py-1 rounded-full text-xs">TXT</span>
+                </div>
+                <div id="file-validation" class="text-sm mb-4 hidden"></div>
+                <button type="button" id="file-select-btn" class="bg-gradient-to-r from-blue-500 to-indigo-600 text-white px-8 py-3 rounded-lg hover:from-blue-600 hover:to-indigo-700 transition-all duration-300 font-medium shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
+                    Choose File
+                </button>
+                <input type="file" id="file-input" style="display: none !important;" accept=".txt,.mp3,.wav,.m4a,.ogg,.flac">
+            </div>
+
+            <!-- File Info and Processing -->
+            <div id="file-info" class="mt-6 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg hidden">
+                <div class="flex items-center justify-between mb-3">
+                    <div class="flex items-center gap-3">
+                        <span class="text-2xl">📄</span>
+                        <div>
+                            <p class="font-medium text-gray-800 dark:text-white" id="file-name"></p>
+                            <p class="text-sm text-gray-600 dark:text-gray-400" id="file-size"></p>
+                        </div>
+                    </div>
+                    <button class="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 p-2 rounded-full hover:bg-red-50 dark:hover:bg-red-900 transition-colors" id="clear-file-btn" title="Remove file">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Session Number Field -->
+                <div class="mb-4 p-3 bg-white dark:bg-gray-600 rounded-lg border border-gray-200 dark:border-gray-500">
+                    <label for="session-number" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        <span class="flex items-center gap-2">
+                            <span class="text-blue-500">📝</span>
+                            Session Number
+                            <span class="text-xs text-gray-500 dark:text-gray-400">(for story header)</span>
+                        </span>
+                    </label>
+                    <div class="flex gap-2">
+                        <input
+                            type="text"
+                            id="session-number"
+                            class="flex-1 p-2 border border-gray-300 dark:border-gray-500 rounded-lg dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors text-sm"
+                            placeholder="e.g., Session 1, Episode 42, Chapter 5"
+                        >
+                        <button
+                            type="button"
+                            id="auto-detect-session"
+                            class="px-3 py-2 text-xs bg-blue-500 text-white rounded-lg hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 transition-colors whitespace-nowrap"
+                            title="Auto-detect from filename"
+                        >
+                            Auto-detect
+                        </button>
+                    </div>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        <span class="text-green-600 dark:text-green-400">💡 Tip:</span>
+                        Will be added to your story header. Auto-detects from filenames like "Session-5.mp3" or "DnD_Episode_12.wav"
+                    </p>
+                </div>
+
+                <div id="upload-progress" class="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-3 mb-4 hidden">
+                    <div id="upload-progress-bar" class="bg-gradient-to-r from-blue-500 to-indigo-600 h-3 rounded-full transition-all duration-300" style="width: 0%"></div>
+                </div>
+
+                <button id="upload-btn" class="w-full bg-gradient-to-r from-green-500 to-emerald-600 text-white px-6 py-3 rounded-lg hover:from-green-600 hover:to-emerald-700 transition-all duration-300 font-medium shadow-lg hover:shadow-xl flex items-center justify-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                    </svg>
+                    Process Session
                 </button>
             </div>
-            <div id="file-info" class="mt-4 hidden">
-                <div class="flex items-center justify-between">
-                    <p class="text-sm text-gray-600">Selected file: <span id="file-name" class="font-medium"></span></p>
-                    <button class="text-xs text-red-500" id="clear-file-btn">✕</button>
+
+            <!-- Recent Files Section -->
+            <div id="recent-files" class="mt-6 pt-4 border-t border-gray-200 dark:border-gray-600 hidden">
+                <div class="flex items-center justify-between mb-3">
+                    <h3 class="font-semibold text-gray-800 dark:text-white flex items-center gap-2">
+                        <span>🕒</span>
+                        Recent Files
+                    </h3>
+                    <button id="clear-recent-btn" class="text-sm text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 transition-colors">Clear</button>
                 </div>
-                <div id="upload-progress" class="w-full bg-gray-200 rounded-full h-2 my-2 hidden">
-                    <div id="upload-progress-bar" class="bg-blue-600 h-2 rounded-full" style="width: 0%"></div>
+                <div id="recent-files-list" class="space-y-2 max-h-32 overflow-y-auto">
+                    <!-- Recent files will be populated here -->
                 </div>
-                <button id="upload-btn" class="w-full mt-2 bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 text-sm">
-                    Process File
-                </button>
             </div>
         </div>
 
-        <!-- Chat Area - Now larger on the right -->
-        <div class="bg-white p-4 rounded-lg shadow-md dark:bg-gray-800 dark:text-white md:col-span-2 transition-colors">
-            <div id="chat-messages" class="h-[500px] overflow-y-auto mb-4 p-4 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-900 transition-colors">
-                <div class="welcome-message text-gray-600">
-                    Welcome! Upload a file to start the conversation.
+        <!-- Story Generation Area -->
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 transition-colors">
+            <div class="flex items-center gap-3 mb-6">
+                <div class="w-10 h-10 bg-purple-500 rounded-full flex items-center justify-center text-white font-bold">2</div>
+                <div>
+                    <h2 class="text-xl font-bold dark:text-white">AI Story Generation</h2>
+                    <p class="text-sm text-gray-600 dark:text-gray-400">Chat with AI to refine your story</p>
                 </div>
             </div>
-            <div class="flex gap-2">
-                <input type="text" id="message-input" class="flex-1 p-2 border rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white transition-colors" placeholder="Type your message...">
-                <button id="send-btn" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 transition-colors">
+
+            <div id="chat-messages" class="h-[400px] overflow-y-auto mb-4 p-4 border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-900 transition-colors">
+                <div class="welcome-message text-center py-12">
+                    <div class="text-6xl mb-4">🐉</div>
+                    <h3 class="text-lg font-semibold text-gray-800 dark:text-white mb-2">Ready to Create Epic Stories!</h3>
+                    <p class="text-gray-600 dark:text-gray-400 mb-4">Upload your D&D session recording to get started</p>
+                    <div class="flex flex-wrap justify-center gap-2">
+                        <span class="bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300 px-3 py-1 rounded-full text-sm">✨ AI-Powered</span>
+                        <span class="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300 px-3 py-1 rounded-full text-sm">🤖 Smart Analysis</span>
+                        <span class="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300 px-3 py-1 rounded-full text-sm">📝 Rich Narratives</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Story Refinement Prompts Section -->
+            <div class="mb-4">
+                <button type="button" id="toggle-prompts" class="flex items-center justify-between w-full text-left bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-900 dark:to-indigo-900 border border-purple-200 dark:border-purple-700 rounded-lg p-3 hover:from-purple-100 hover:to-indigo-100 dark:hover:from-purple-800 dark:hover:to-indigo-800 transition-all duration-300">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 bg-gradient-to-r from-purple-500 to-indigo-600 rounded-full flex items-center justify-center text-white text-sm font-bold">✨</div>
+                        <div>
+                            <span class="font-medium text-gray-800 dark:text-white">Story Refinement Prompts</span>
+                            <p class="text-xs text-gray-600 dark:text-gray-400">Click any prompt to use and customize</p>
+                        </div>
+                    </div>
+                    <svg id="prompts-arrow" class="w-5 h-5 text-gray-500 dark:text-gray-400 transform transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                    </svg>
+                </button>
+
+                <div id="prompts-panel" class="hidden mt-3 space-y-2">
+                    <div class="grid gap-2">
+                        <!-- Prompt 1: Drama & Tension -->
+                        <button type="button" class="prompt-option group text-left p-3 border border-red-200 dark:border-red-800 rounded-lg bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/40 transition-all duration-300 transform hover:scale-105" data-prompt="Add more dramatic tension and exciting moments to this scene. Focus on creating suspense, raising stakes, and making the action more engaging for readers.">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 bg-gradient-to-r from-red-500 to-orange-600 rounded-full flex items-center justify-center text-white font-bold text-sm">🔥</div>
+                                <div class="flex-1">
+                                    <div class="font-semibold text-red-800 dark:text-red-300 group-hover:text-red-900 dark:group-hover:text-red-200">Drama & Tension</div>
+                                    <div class="text-xs text-red-600 dark:text-red-400">Add excitement and suspense</div>
+                                </div>
+                            </div>
+                        </button>
+
+                        <!-- Prompt 2: Character Dialogue -->
+                        <button type="button" class="prompt-option group text-left p-3 border border-blue-200 dark:border-blue-800 rounded-lg bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-all duration-300 transform hover:scale-105" data-prompt="Enhance character dialogue and roleplay interactions. Add more personality, unique speech patterns, and meaningful conversations that reveal character motivations and relationships.">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 bg-gradient-to-r from-blue-500 to-cyan-600 rounded-full flex items-center justify-center text-white font-bold text-sm">💬</div>
+                                <div class="flex-1">
+                                    <div class="font-semibold text-blue-800 dark:text-blue-300 group-hover:text-blue-900 dark:group-hover:text-blue-200">Character Dialogue</div>
+                                    <div class="text-xs text-blue-600 dark:text-blue-400">Improve conversations and roleplay</div>
+                                </div>
+                            </div>
+                        </button>
+
+                        <!-- Prompt 3: World Building -->
+                        <button type="button" class="prompt-option group text-left p-3 border border-green-200 dark:border-green-800 rounded-lg bg-green-50 dark:bg-green-900/20 hover:bg-green-100 dark:hover:bg-green-900/40 transition-all duration-300 transform hover:scale-105" data-prompt="Expand on world-building and environmental descriptions. Add rich details about locations, atmosphere, cultures, and the setting to make the world feel more immersive and alive.">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 bg-gradient-to-r from-green-500 to-emerald-600 rounded-full flex items-center justify-center text-white font-bold text-sm">🏰</div>
+                                <div class="flex-1">
+                                    <div class="font-semibold text-green-800 dark:text-green-300 group-hover:text-green-900 dark:group-hover:text-green-200">World Building</div>
+                                    <div class="text-xs text-green-600 dark:text-green-400">Enhance settings and environments</div>
+                                </div>
+                            </div>
+                        </button>
+
+                        <!-- Prompt 4: Character Development -->
+                        <button type="button" class="prompt-option group text-left p-3 border border-purple-200 dark:border-purple-800 rounded-lg bg-purple-50 dark:bg-purple-900/20 hover:bg-purple-100 dark:hover:bg-purple-900/40 transition-all duration-300 transform hover:scale-105" data-prompt="Focus on character development and backstory elements. Dive deeper into character motivations, personal growth, relationships, and how their past influences their current actions.">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 bg-gradient-to-r from-purple-500 to-indigo-600 rounded-full flex items-center justify-center text-white font-bold text-sm">👤</div>
+                                <div class="flex-1">
+                                    <div class="font-semibold text-purple-800 dark:text-purple-300 group-hover:text-purple-900 dark:group-hover:text-purple-200">Character Development</div>
+                                    <div class="text-xs text-purple-600 dark:text-purple-400">Deepen personalities and backstories</div>
+                                </div>
+                            </div>
+                        </button>
+
+                        <!-- Prompt 5: Combat & Action -->
+                        <button type="button" class="prompt-option group text-left p-3 border border-yellow-200 dark:border-yellow-800 rounded-lg bg-yellow-50 dark:bg-yellow-900/20 hover:bg-yellow-100 dark:hover:bg-yellow-900/40 transition-all duration-300 transform hover:scale-105" data-prompt="Improve combat descriptions and action sequences. Make battles more vivid and tactical, describing movements, strategy, and the visceral impact of each attack and spell.">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 bg-gradient-to-r from-yellow-500 to-orange-600 rounded-full flex items-center justify-center text-white font-bold text-sm">⚔️</div>
+                                <div class="flex-1">
+                                    <div class="font-semibold text-yellow-800 dark:text-yellow-300 group-hover:text-yellow-900 dark:group-hover:text-yellow-200">Combat & Action</div>
+                                    <div class="text-xs text-yellow-600 dark:text-yellow-400">Enhance battles and action scenes</div>
+                                </div>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex gap-3">
+                <input type="text" id="message-input" class="flex-1 p-3 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors" placeholder="Ask AI to refine your story...">
+                <button id="send-btn" class="bg-gradient-to-r from-purple-500 to-indigo-600 text-white px-6 py-3 rounded-lg hover:from-purple-600 hover:to-indigo-700 transition-all duration-300 font-medium shadow-lg hover:shadow-xl flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+                    </svg>
                     Send
                 </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Export & Share Section -->
+    <div class="mt-8 bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 transition-colors">
+        <div class="flex items-center gap-3 mb-6">
+            <div class="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center text-white font-bold">3</div>
+            <div>
+                <h2 class="text-xl font-bold dark:text-white">Export & Share</h2>
+                <p class="text-sm text-gray-600 dark:text-gray-400">Save your story in multiple formats</p>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <button id="export-pdf-btn" class="group bg-gradient-to-r from-red-500 to-pink-600 text-white px-6 py-4 rounded-lg hover:from-red-600 hover:to-pink-700 disabled:from-gray-400 disabled:to-gray-500 dark:disabled:from-gray-600 dark:disabled:to-gray-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:hover:transform-none flex items-center justify-center gap-3">
+                <svg class="w-6 h-6 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                </svg>
+                <div class="text-left">
+                    <div class="font-semibold">PDF Export</div>
+                    <div class="text-xs opacity-90">Formatted document</div>
+                </div>
+            </button>
+
+            <button id="export-word-btn" class="group bg-gradient-to-r from-blue-500 to-cyan-600 text-white px-6 py-4 rounded-lg hover:from-blue-600 hover:to-cyan-700 disabled:from-gray-400 disabled:to-gray-500 dark:disabled:from-gray-600 dark:disabled:to-gray-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:hover:transform-none flex items-center justify-center gap-3">
+                <svg class="w-6 h-6 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                </svg>
+                <div class="text-left">
+                    <div class="font-semibold">Word Export</div>
+                    <div class="text-xs opacity-90">Editable document</div>
+                </div>
+            </button>
+
+            <button id="export-confluence-btn" class="group bg-gradient-to-r from-green-500 to-emerald-600 text-white px-6 py-4 rounded-lg hover:from-green-600 hover:to-emerald-700 disabled:from-gray-400 disabled:to-gray-500 dark:disabled:from-gray-600 dark:disabled:to-gray-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:hover:transform-none flex items-center justify-center gap-3">
+                <svg class="w-6 h-6 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"></path>
+                </svg>
+                <div class="text-left">
+                    <div class="font-semibold">Confluence</div>
+                    <div class="text-xs opacity-90">Team collaboration</div>
+                </div>
+            </button>
+        </div>
+
+        <div id="export-status" class="p-4 rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 hidden">
+            <div class="flex items-center gap-3">
+                <div class="animate-spin rounded-full h-5 w-5 border-2 border-blue-500 border-t-transparent hidden" id="export-spinner"></div>
+                <div class="text-green-500 hidden" id="export-success">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                </div>
+                <div class="text-red-500 hidden" id="export-error">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </div>
+                <p id="export-message" class="text-sm text-gray-700 dark:text-gray-300"></p>
             </div>
         </div>
     </div>
