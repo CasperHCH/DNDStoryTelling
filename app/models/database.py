@@ -33,23 +33,23 @@ def _get_database_config():
 # Initialize database configuration lazily
 DATABASE_URL, settings = _get_database_config()
 
-# Configure engine with connection pooling
-if "test" in DATABASE_URL:
-    # Use NullPool for testing to avoid connection issues
+# Configure engine with appropriate settings based on database type
+if "test" in DATABASE_URL or "sqlite" in DATABASE_URL:
+    # Use NullPool for testing and SQLite to avoid connection issues
     engine: AsyncEngine = create_async_engine(
         DATABASE_URL,
         echo=settings.DEBUG,
         poolclass=NullPool,
     )
 else:
-    # Use connection pooling for production
+    # Use connection pooling for PostgreSQL in production
     engine: AsyncEngine = create_async_engine(
         DATABASE_URL,
         echo=settings.DEBUG,
-        pool_size=5,  # Number of connections to maintain in pool
-        max_overflow=10,  # Additional connections beyond pool_size
+        pool_size=settings.DB_POOL_SIZE,  # Number of connections to maintain in pool
+        max_overflow=settings.DB_MAX_OVERFLOW,  # Additional connections beyond pool_size
         pool_pre_ping=True,  # Validate connections before use
-        pool_recycle=3600,  # Recycle connections every hour
+        pool_recycle=settings.DB_POOL_RECYCLE,  # Recycle connections
     )
 
 # Configure session factory

@@ -107,11 +107,11 @@ Write-Host "✅ Configuration created: $envFile" -ForegroundColor Green
 # Clean rebuild if requested
 if ($Clean) {
     Write-Host "🧹 Performing clean rebuild..." -ForegroundColor Yellow
-    
+
     docker-compose -f $composeFile down --volumes --remove-orphans
     docker system prune -f
     docker volume prune -f
-    
+
     Write-Host "✅ Clean completed" -ForegroundColor Green
 }
 
@@ -151,9 +151,9 @@ $interval = 10
 do {
     Start-Sleep $interval
     $elapsed += $interval
-    
+
     Write-Host "    ⏱️ Elapsed: ${elapsed}s / ${timeout}s" -ForegroundColor Gray
-    
+
     # Check web service
     try {
         $response = Invoke-WebRequest -Uri "http://localhost:8001/" -Method GET -TimeoutSec 5 -UseBasicParsing
@@ -163,7 +163,7 @@ do {
     } catch {
         # Service not ready yet
     }
-    
+
 } while ($elapsed -lt $timeout)
 
 # Show status
@@ -197,7 +197,7 @@ Write-Host "=" * 50 -ForegroundColor Green
 Write-Host
 Write-Host "🌐 Web Application: " -NoNewline -ForegroundColor Cyan
 Write-Host "http://localhost:8001" -ForegroundColor White
-Write-Host "🤖 Ollama API: " -NoNewline -ForegroundColor Cyan  
+Write-Host "🤖 Ollama API: " -NoNewline -ForegroundColor Cyan
 Write-Host "http://localhost:11434" -ForegroundColor White
 Write-Host
 Write-Host "💰 COST BREAKDOWN:" -ForegroundColor Yellow
@@ -226,18 +226,18 @@ Write-Host "   Clean reset:  .\Run-Free-Docker.ps1 -Clean" -ForegroundColor Whit
 if ($Models) {
     Write-Host
     Write-Host "📥 DOWNLOADING ADDITIONAL MODELS..." -ForegroundColor Cyan
-    
+
     $additionalModels = @(
         "mistral:7b",      # Great for storytelling
         "codellama:7b",    # Good for technical content
         "llama3.2:7b"      # Higher quality but slower
     )
-    
+
     foreach ($model in $additionalModels) {
         Write-Host "   Downloading $model..." -ForegroundColor Gray
         docker-compose -f $composeFile exec web-free ollama pull $model
     }
-    
+
     Write-Host "✅ Additional models downloaded" -ForegroundColor Green
 }
 

@@ -199,7 +199,7 @@ docker-compose -f docker-compose.free.yml exec web-free ollama pull mistral:7b
 
 ## 🎯 Feature Comparison
 
-| Feature | Free Version | Paid Version | 
+| Feature | Free Version | Paid Version |
 |---------|-------------|-------------|
 | **Story Generation** | ✅ Ollama (Local) | OpenAI GPT-4 |
 | **Audio Processing** | ✅ Whisper.cpp (Local) | OpenAI Whisper |
@@ -217,7 +217,7 @@ When properly running, you should see:
 
 ```
 ✅ Web Application: http://localhost:8001
-✅ Ollama API: http://localhost:11434  
+✅ Ollama API: http://localhost:11434
 ✅ Models Downloaded: llama3.2:3b
 ✅ Whisper Ready: ggml-base.bin
 ✅ Database: SQLite initialized
