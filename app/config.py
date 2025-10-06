@@ -90,6 +90,23 @@ class Settings(BaseSettings):
     SOCKETIO_PING_TIMEOUT: int = Field(default=20000)   # 20 seconds
     SOCKETIO_MAX_HTTP_BUFFER_SIZE: int = Field(default=1000000)  # 1MB
 
+    # Free Services Configuration
+    AI_SERVICE: str = Field(default="openai")  # Options: "openai", "ollama", "demo"
+    AUDIO_SERVICE: str = Field(default="openai")  # Options: "openai", "whisper_cpp", "demo"
+    USE_SQLITE: bool = Field(default=False)  # Use SQLite instead of PostgreSQL
+    DEMO_MODE_FALLBACK: bool = Field(default=True)  # Fall back to demo mode on errors
+    
+    # Ollama Configuration (Free Local AI)
+    OLLAMA_BASE_URL: str = Field(default="http://localhost:11434")
+    OLLAMA_MODEL: str = Field(default="llama3.2:3b")
+    
+    # Whisper.cpp Configuration (Free Audio)
+    WHISPER_EXECUTABLE: str = Field(default="whisper")
+    WHISPER_MODEL_PATH: str = Field(default="models/ggml-base.bin")
+    
+    # SQLite Configuration
+    SQLITE_PATH: str = Field(default="data/dnd_stories.db")
+
     model_config = ConfigDict(
         env_file=_get_env_files(),
         env_file_encoding="utf-8",

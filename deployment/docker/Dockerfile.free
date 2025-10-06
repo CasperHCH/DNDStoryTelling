@@ -1,0 +1,105 @@
+# Free Services Docker Setup
+# Build arguments for PIP configuration
+ARG PIP_DEFAULT_TIMEOUT=300
+ARG PIP_RETRIES=5
+
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install system dependencies including tools for free services
+RUN apt-get update && apt-get install -y \
+    gcc \
+    g++ \
+    make \
+    cmake \
+    git \
+    ffmpeg \
+    libpq-dev \
+    netcat-openbsd \
+    curl \
+    wget \
+    build-essential \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/* \
+    && rm -rf /tmp/* /var/tmp/*
+
+# Configure pip with build args
+ENV PIP_DEFAULT_TIMEOUT=${PIP_DEFAULT_TIMEOUT}
+ENV PIP_RETRIES=${PIP_RETRIES}
+ENV PIP_NO_CACHE_DIR=1
+
+# Configure environment for free services
+ENV PYTHONPATH=/app
+ENV AI_SERVICE=ollama
+ENV AUDIO_SERVICE=whisper_cpp
+ENV USE_SQLITE=true
+ENV DEMO_MODE_FALLBACK=true
+
+# Copy requirements and install Python packages
+COPY requirements.txt .
+COPY testing/test-requirements.txt ./testing/
+RUN pip install -r requirements.txt \
+    && pip install -r testing/test-requirements.txt \
+    && pip install ffmpeg-python asyncpg httpx \
+    && rm -rf /root/.cache/pip
+
+# Install Ollama (Free Local AI)
+RUN curl -fsSL https://ollama.ai/install.sh | sh
+
+# Create directories for Ollama and Whisper
+RUN mkdir -p /app/models/ollama /app/models/whisper /app/data
+
+# Install Whisper.cpp (Free Audio Transcription)
+RUN cd /tmp \
+    && git clone https://github.com/ggerganov/whisper.cpp.git \
+    && cd whisper.cpp \
+    && make \
+    && cp main /usr/local/bin/whisper \
+    && mkdir -p /app/models/whisper \
+    && cd /app/models/whisper \
+    && wget -q https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-base.bin \
+    && cd /tmp && rm -rf whisper.cpp
+
+# Copy application code
+COPY . .
+
+# Create necessary directories with proper permissions
+RUN mkdir -p /app/static /app/templates /data \
+    && mkdir -p /app/.pytest_cache \
+    && mkdir -p /app/uploads \
+    && chmod -R 755 /app \
+    && chmod -R 777 /app/.pytest_cache \
+    && chmod -R 777 /data \
+    && chmod -R 777 /app/uploads \
+    && chmod -R 777 /app/models
+
+# Set environment variables for free services
+ENV OLLAMA_HOST=0.0.0.0:11434
+ENV WHISPER_EXECUTABLE=/usr/local/bin/whisper
+ENV WHISPER_MODEL_PATH=/app/models/whisper/ggml-base.bin
+ENV SQLITE_PATH=/data/dnd_stories.db
+
+# Expose ports
+EXPOSE 8000 11434
+
+# Create startup script for free services
+RUN echo '#!/bin/bash\n\
+echo "🆓 Starting Free D&D Storytelling Services..."\n\
+echo "Starting Ollama service..."\n\
+ollama serve &\n\
+sleep 5\n\
+echo "Downloading base AI model (this may take a few minutes on first run)..."\n\
+ollama pull llama3.2:3b || echo "Model download failed, will use demo mode"\n\
+echo "✅ Free services initialized!"\n\
+echo "🎮 Starting D&D Storytelling App..."\n\
+python scripts/start_server.py\n\
+' > /app/start_free_services.sh \
+    && chmod +x /app/start_free_services.sh
+
+# Add health check that includes free services
+HEALTHCHECK --interval=30s --timeout=30s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:8000/health && (curl -f http://localhost:11434/api/tags > /dev/null 2>&1 || echo "Ollama starting...") || exit 1
+
+# Start the application with free services
+CMD ["/app/start_free_services.sh"]

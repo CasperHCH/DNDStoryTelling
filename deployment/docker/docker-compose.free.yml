@@ -1,0 +1,120 @@
+# Free Services Docker Compose Configuration
+# Zero-cost D&D storytelling with local AI and audio processing
+
+services:
+  # Free D&D Storytelling Web App
+  web-free:
+    build:
+      context: ../..
+      dockerfile: deployment/docker/Dockerfile.free
+      args:
+        - PIP_DEFAULT_TIMEOUT=300
+        - PIP_RETRIES=5
+    ports:
+      - "8001:8000"   # Web application
+      - "11434:11434" # Ollama API
+    environment:
+      # Free services configuration
+      - AI_SERVICE=ollama
+      - AUDIO_SERVICE=whisper_cpp
+      - USE_SQLITE=true
+      - DEMO_MODE_FALLBACK=true
+      
+      # Database (SQLite - free)
+      - DATABASE_URL=sqlite:///data/dnd_stories.db
+      
+      # Disable paid services
+      - OPENAI_API_KEY=
+      - CONFLUENCE_API_TOKEN=
+      - CONFLUENCE_URL=
+      - ENABLE_CONFLUENCE=false
+      
+      # Ollama configuration
+      - OLLAMA_HOST=0.0.0.0:11434
+      - OLLAMA_BASE_URL=http://localhost:11434
+      - OLLAMA_MODEL=llama3.2:3b
+      
+      # Whisper.cpp configuration
+      - WHISPER_EXECUTABLE=/usr/local/bin/whisper
+      - WHISPER_MODEL_PATH=/app/models/whisper/ggml-base.bin
+      
+      # App configuration
+      - SECRET_KEY=${SECRET_KEY:-free-dnd-app-secret-key}
+      - ENVIRONMENT=free-services
+      - DEBUG=true
+      - MAX_UPLOAD_SIZE=5368709120  # 5GB
+    
+    volumes:
+      # Application code and data
+      - ../../:/app:cached
+      - app_free_data:/data
+      - app_free_uploads:/app/uploads
+      - app_free_logs:/app/logs
+      - app_free_models:/app/models
+      
+      # SQLite database persistence
+      - app_free_sqlite:/app/data
+    
+    working_dir: /app
+    
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/health && (curl -f http://localhost:11434/api/tags > /dev/null 2>&1 || echo 'Ollama starting')"]
+      interval: 30s
+      timeout: 15s
+      retries: 5
+      start_period: 120s  # Allow time for model download
+    
+    restart: unless-stopped
+    networks:
+      - free-app-network
+    
+    # Resource limits to prevent system overload
+    deploy:
+      resources:
+        limits:
+          memory: 8G
+          cpus: '4.0'
+        reservations:
+          memory: 2G
+          cpus: '1.0'
+
+  # PostgreSQL (Optional - only if you prefer it over SQLite)
+  db-free:
+    image: postgres:15-alpine
+    volumes:
+      - postgres_free_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=dnd_user
+      - POSTGRES_PASSWORD=dnd_free_password
+      - POSTGRES_DB=dnd_free
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dnd_user -d dnd_free"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    ports:
+      - "5433:5432"  # Different port to avoid conflicts
+    restart: unless-stopped
+    networks:
+      - free-app-network
+    profiles:
+      - postgres  # Only start with --profile postgres
+
+networks:
+  free-app-network:
+    driver: bridge
+
+volumes:
+  # Persistent storage for free services
+  app_free_data:
+    driver: local
+  app_free_uploads:
+    driver: local
+  app_free_logs:
+    driver: local
+  app_free_models:
+    driver: local
+  app_free_sqlite:
+    driver: local
+  postgres_free_data:
+    driver: local

@@ -12,7 +12,7 @@ async def test_openai_models():
         print("❌ OPENAI_API_KEY environment variable not set!")
         print("   Set it with: export OPENAI_API_KEY='your-key-here'")
         return
-    
+
     client = AsyncOpenAI(api_key=api_key)
 
     models_to_test = ["gpt-4o", "gpt-4", "gpt-4-turbo", "gpt-3.5-turbo"]

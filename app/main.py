@@ -29,6 +29,16 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+# Free services integration
+try:
+    from app.services.free_service_manager import free_service_manager
+    FREE_SERVICES_AVAILABLE = True
+    logger.info("Free services integration available")
+except ImportError:
+    FREE_SERVICES_AVAILABLE = False
+    free_service_manager = None
+    logger.info("Free services not available, using traditional services")
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -38,6 +48,15 @@ async def lifespan(app: FastAPI):
     try:
         await init_db()
         logger.info("Database initialized successfully")
+
+        # Initialize free services if available
+        if FREE_SERVICES_AVAILABLE and settings.AI_SERVICE == "ollama":
+            try:
+                await free_service_manager.initialize()
+                service_status = free_service_manager.get_service_status()
+                logger.info(f"Free services initialized: {service_status}")
+            except Exception as e:
+                logger.warning(f"Free services initialization failed: {e}")
 
         # Initialize monitoring
         from app.utils.monitoring import start_metrics_collection
