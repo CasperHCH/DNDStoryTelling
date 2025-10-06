@@ -16,31 +16,31 @@ class TestAuthRoutes:
 
     def test_login_endpoint_exists(self):
         """Test that the login endpoint exists."""
-        response = self.client.post("/login")
+        response = self.client.post("/auth/token")
         # Should not return 404 (endpoint exists)
         assert response.status_code != 404
 
     def test_register_endpoint_exists(self):
         """Test that the register endpoint exists."""
-        response = self.client.post("/register")
+        response = self.client.post("/auth/register")
         # Should not return 404 (endpoint exists)
         assert response.status_code != 404
 
-    @patch('app.routes.auth.authenticate_user')
     @patch('app.routes.auth.create_access_token')
-    def test_login_success(self, mock_token, mock_auth):
+    @patch('app.routes.auth.verify_password')
+    def test_login_success(self, mock_verify, mock_token):
         """Test successful user login."""
         # Setup mocks
-        mock_user = {"id": 1, "username": "testuser", "email": "test@example.com"}
-        mock_auth.return_value = mock_user
+        mock_verify.return_value = True
         mock_token.return_value = "fake_jwt_token"
 
+        # Use form data as expected by OAuth2PasswordRequestForm
         login_data = {
             "username": "testuser",
             "password": "testpass"
         }
 
-        response = self.client.post("/login", json=login_data)
+        response = self.client.post("/auth/token", data=login_data)
 
         assert response.status_code == 200
         data = response.json()
@@ -59,7 +59,7 @@ class TestAuthRoutes:
             "password": "wrongpass"
         }
 
-        response = self.client.post("/login", json=login_data)
+        response = self.client.post("/auth/token", data=login_data)
 
         assert response.status_code == 401
         data = response.json()
@@ -71,7 +71,7 @@ class TestAuthRoutes:
             "password": "testpass"
         }
 
-        response = self.client.post("/login", json=login_data)
+        response = self.client.post("/auth/token", data=login_data)
 
         assert response.status_code == 422  # Validation error
 
@@ -81,7 +81,7 @@ class TestAuthRoutes:
             "username": "testuser"
         }
 
-        response = self.client.post("/login", json=login_data)
+        response = self.client.post("/auth/token", data=login_data)
 
         assert response.status_code == 422  # Validation error
 
@@ -92,7 +92,7 @@ class TestAuthRoutes:
             "password": ""
         }
 
-        response = self.client.post("/login", json=login_data)
+        response = self.client.post("/auth/token", data=login_data)
 
         # Should handle empty credentials gracefully
         assert response.status_code in [400, 401, 422]
@@ -114,7 +114,7 @@ class TestAuthRoutes:
             "password": "newpass123"
         }
 
-        response = self.client.post("/register", json=register_data)
+        response = self.client.post("/auth/register", json=register_data)
 
         assert response.status_code == 201
         data = response.json()
@@ -133,7 +133,7 @@ class TestAuthRoutes:
             "password": "newpass123"
         }
 
-        response = self.client.post("/register", json=register_data)
+        response = self.client.post("/auth/register", json=register_data)
 
         assert response.status_code == 400
         data = response.json()
@@ -152,7 +152,7 @@ class TestAuthRoutes:
             "password": "newpass123"
         }
 
-        response = self.client.post("/register", json=register_data)
+        response = self.client.post("/auth/register", json=register_data)
 
         assert response.status_code == 400
         data = response.json()
@@ -166,7 +166,7 @@ class TestAuthRoutes:
             "password": "newpass123"
         }
 
-        response = self.client.post("/register", json=register_data)
+        response = self.client.post("/auth/register", json=register_data)
 
         assert response.status_code == 422  # Validation error
 
@@ -178,7 +178,7 @@ class TestAuthRoutes:
             "password": "123"  # Too short
         }
 
-        response = self.client.post("/register", json=register_data)
+        response = self.client.post("/auth/register", json=register_data)
 
         # Should handle weak password (validation or business logic)
         assert response.status_code in [400, 422]
@@ -190,7 +190,7 @@ class TestAuthRoutes:
             # Missing email and password
         }
 
-        response = self.client.post("/register", json=incomplete_data)
+        response = self.client.post("/auth/register", json=incomplete_data)
 
         assert response.status_code == 422  # Validation error
 
@@ -237,7 +237,7 @@ class TestAuthRoutes:
                 "password": "testpass"
             }
 
-            response = self.client.post("/login", json=login_data)
+            response = self.client.post("/auth/token", data=login_data)
 
             # Should handle email login if supported
             assert response.status_code in [200, 401, 400]
@@ -252,7 +252,7 @@ class TestAuthRoutes:
             "password": "testpass"
         }
 
-        response = self.client.post("/login", json=login_data)
+        response = self.client.post("/auth/token", data=login_data)
 
         # Response depends on whether usernames are case-sensitive
         assert response.status_code in [200, 401]
@@ -268,7 +268,7 @@ class TestAuthRoutes:
             "password": "wrongpass"
         }
 
-        response = self.client.post("/login", json=login_data)
+        response = self.client.post("/auth/token", data=login_data)
 
         # Should log failed login attempts
         mock_logger.warning.assert_called()
@@ -289,7 +289,7 @@ class TestAuthRoutes:
             "password": "newpass123"
         }
 
-        response = self.client.post("/register", json=register_data)
+        response = self.client.post("/auth/register", json=register_data)
 
         # Should log registration errors
         mock_logger.error.assert_called()
@@ -302,7 +302,7 @@ class TestAuthRoutes:
                 mock_token.return_value = "token"
 
                 login_data = {"username": "test", "password": "pass"}
-                response = self.client.post("/login", json=login_data)
+                response = self.client.post("/auth/token", data=login_data)
 
                 if response.status_code == 200:
                     data = response.json()
@@ -318,7 +318,7 @@ class TestAuthRoutes:
                 mock_token.return_value = "token"
 
                 login_data = {"username": "test", "password": "pass"}
-                response = self.client.post("/login", json=login_data)
+                response = self.client.post("/auth/token", data=login_data)
 
                 assert "content-type" in response.headers
                 assert "application/json" in response.headers["content-type"]
@@ -333,7 +333,7 @@ class TestAuthRoutes:
             "password": "' OR '1'='1"
         }
 
-        response = self.client.post("/login", json=malicious_data)
+        response = self.client.post("/auth/token", json=malicious_data)
 
         # Should handle malicious input safely
         assert response.status_code in [400, 401, 422]
@@ -351,7 +351,7 @@ class TestAuthRoutes:
             "password": "password123"
         }
 
-        response = self.client.post("/register", json=xss_data)
+        response = self.client.post("/auth/register", json=xss_data)
 
         # Should handle XSS attempts safely
         assert response.status_code in [400, 422, 201]
@@ -366,7 +366,7 @@ class TestAuthRoutes:
         responses = []
         # Make multiple rapid requests
         for _ in range(10):
-            response = self.client.post("/login", json=login_data)
+            response = self.client.post("/auth/token", data=login_data)
             responses.append(response.status_code)
 
         # Rate limiting behavior depends on implementation
@@ -389,7 +389,7 @@ class TestAuthRoutes:
             "password": "plaintext_password"
         }
 
-        response = self.client.post("/register", json=register_data)
+        response = self.client.post("/auth/register", json=register_data)
 
         if response.status_code == 201:
             # Verify create_user was called (password should be hashed internally)
@@ -408,7 +408,7 @@ class TestAuthRoutes:
                 "password": "påsswörd"
             }
 
-            response = self.client.post("/login", json=unicode_data)
+            response = self.client.post("/auth/token", json=unicode_data)
 
             # Should handle unicode gracefully
             assert response.status_code in [200, 401, 422]
@@ -424,7 +424,7 @@ class TestAuthRoutes:
                     mock_token.return_value = "token"
 
                     login_data = {"username": "test", "password": "pass"}
-                    return self.client.post("/login", json=login_data)
+                    return self.client.post("/auth/token", data=login_data)
 
         # Make multiple concurrent requests
         with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
@@ -434,3 +434,4 @@ class TestAuthRoutes:
         # All requests should complete without errors
         for response in responses:
             assert response.status_code != 500
+

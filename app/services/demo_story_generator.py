@@ -79,7 +79,9 @@ class DemoStoryGenerator:
             # Enhance dialogue
             elif '"' in line or line.endswith('"):') or line.endswith("'):"):
                 enhanced_story += f"{random.choice(self.enhancement_templates['dialogue'])} \n\n"
-                enhanced_story += f"*\"{line.replace('\"', '')}\"*\n\n"
+                # Fix f-string backslash issue by using separate variable
+                clean_line = line.replace('"', '')
+                enhanced_story += f"*\"{clean_line}\"*\n\n"
 
             # Enhance DM descriptions
             elif line.startswith('DM:'):
