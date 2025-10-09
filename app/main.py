@@ -463,11 +463,137 @@ async def handle_message(sid, data):
 
         logger.info(f"Processing chat message from {sid}: {user_message[:100]}...")
 
-        # Check if OpenAI API key is configured
+        # Check service configuration for free version support
         settings = get_settings()
         openai_key = settings.OPENAI_API_KEY
 
-        if not openai_key:
+        # Try free services first, then OpenAI, then fallback to demo
+        use_free_services = (
+            settings.AI_SERVICE in ["ollama", "demo"] and
+            settings.DEMO_MODE_FALLBACK
+        )
+
+        if use_free_services:
+            try:
+                # Import and use free service manager for chat
+                from app.services.free_service_manager import free_service_manager
+                from app.models.story import StoryContext
+
+                # Create a context for the chat
+                context = StoryContext(
+                    session_name="Chat Session",
+                    setting="D&D Fantasy Campaign",
+                    characters=[],
+                    previous_events=[],
+                    campaign_notes="Interactive chat assistance for D&D story development"
+                )
+
+                # Create a specialized prompt for chat assistance
+                chat_prompt = f"""You are an AI assistant specializing in D&D campaign development and storytelling.
+
+The user is asking: "{user_message}"
+
+Please provide a helpful, creative, and detailed response that assists with D&D story development. Focus on:
+- Enhancing narrative elements
+- Developing characters and worldbuilding
+- Improving dialogue and descriptions
+- Providing creative suggestions
+- Maintaining D&D theme and mechanics
+
+Keep your response engaging and practical for D&D gameplay."""
+
+                # Generate AI response using free services
+                ai_response = await free_service_manager.generate_story(chat_prompt, context)
+
+                response = {"text": ai_response}
+                await sio.emit("response", response, room=sid)
+
+                logger.info(f"Free service AI response sent to {sid} ({len(ai_response)} characters)")
+                return
+
+            except Exception as e:
+                logger.warning(f"Free services failed, trying OpenAI: {str(e)}")
+                # Continue to OpenAI or demo mode below
+
+        if openai_key:
+            try:
+                from app.services.story_generator import StoryGenerator
+                from app.models.story import StoryContext
+
+                # Initialize story generator
+                story_generator = StoryGenerator(openai_key)
+
+                # Create a context for the chat - this could be enhanced to remember session context
+                context = StoryContext(
+                    session_name="Chat Session",
+                    setting="D&D Fantasy Campaign",
+                    characters=[],
+                    previous_events=[],
+                    campaign_notes="Interactive chat assistance for D&D story development"
+                )
+
+                # Create a specialized prompt for chat assistance
+                chat_prompt = f"""You are an AI assistant specializing in D&D campaign development and storytelling.
+
+The user is asking: "{user_message}"
+
+Please provide a helpful, creative, and detailed response that assists with D&D story development. Focus on:
+- Enhancing narrative elements
+- Developing characters and worldbuilding
+- Improving dialogue and descriptions
+- Providing creative suggestions
+- Maintaining D&D theme and mechanics
+
+Keep your response engaging and practical for D&D gameplay."""
+
+                # Generate AI response using the story generator
+                ai_response = await story_generator.generate_story(chat_prompt, context)
+
+                response = {"text": ai_response}
+                await sio.emit("response", response, room=sid)
+
+                logger.info(f"OpenAI response sent to {sid} ({len(ai_response)} characters)")
+                return
+
+            except Exception as e:
+                logger.error(f"Error generating OpenAI response: {str(e)}")
+                error_msg = str(e).lower()
+
+                # Check for specific error types and provide appropriate responses
+                if "quota" in error_msg or "insufficient_quota" in error_msg:
+                    # Quota exceeded - fall back to free services or demo mode
+                    try:
+                        from app.services.free_service_manager import free_service_manager
+                        from app.models.story import StoryContext
+
+                        context = StoryContext(
+                            session_name="Chat Session",
+                            setting="D&D Fantasy Campaign",
+                            characters=[],
+                            previous_events=[],
+                            campaign_notes="Interactive chat assistance for D&D story development"
+                        )
+
+                        chat_prompt = f"""You are an AI assistant specializing in D&D campaign development and storytelling.
+
+The user is asking: "{user_message}"
+
+Please provide a helpful, creative, and detailed response that assists with D&D story development."""
+
+                        ai_response = await free_service_manager.generate_story(chat_prompt, context)
+
+                        response_text = f"💳 **OpenAI Quota Exceeded - Using Free AI**\n\n{ai_response}\n\n🔄 **Note:** Switched to free local AI services. For OpenAI, check your billing at https://platform.openai.com/account/billing"
+
+                        response = {"text": response_text}
+                        await sio.emit("response", response, room=sid)
+                        return
+
+                    except Exception as free_error:
+                        logger.warning(f"Free services also failed: {free_error}")
+                        # Continue to demo fallback below
+
+        # Fallback to demo mode if no other options work
+        if True:  # Always provide demo responses as final fallback
             # Use demo chat responses for testing
             demo_responses = {
                 "dramatic": "🎭 **Enhanced Drama**: Consider adding more tension by having characters face moral dilemmas, introducing unexpected betrayals, or raising the stakes with time pressure. Add visceral descriptions of combat - the clash of steel, the smell of ozone from magic, the thunderous roar of monsters!",
@@ -507,80 +633,6 @@ Your question: *"{user_message}"*
             response = {"text": demo_text}
             await sio.emit("response", response, room=sid)
             return
-
-        try:
-            from app.services.story_generator import StoryGenerator
-            from app.models.story import StoryContext
-
-            # Initialize story generator
-            story_generator = StoryGenerator(openai_key)
-
-            # Create a context for the chat - this could be enhanced to remember session context
-            context = StoryContext(
-                session_name="Chat Session",
-                setting="D&D Fantasy Campaign",
-                characters=[],
-                previous_events=[],
-                campaign_notes="Interactive chat assistance for D&D story development"
-            )
-
-            # Create a specialized prompt for chat assistance
-            chat_prompt = f"""You are an AI assistant specializing in D&D campaign development and storytelling.
-
-The user is asking: "{user_message}"
-
-Please provide a helpful, creative, and detailed response that assists with D&D story development. Focus on:
-- Enhancing narrative elements
-- Developing characters and worldbuilding
-- Improving dialogue and descriptions
-- Providing creative suggestions
-- Maintaining D&D theme and mechanics
-
-Keep your response engaging and practical for D&D gameplay."""
-
-            # Generate AI response using the story generator
-            ai_response = await story_generator.generate_story(chat_prompt, context)
-
-            response = {"text": ai_response}
-            await sio.emit("response", response, room=sid)
-
-            logger.info(f"AI response sent to {sid} ({len(ai_response)} characters)")
-
-        except Exception as e:
-            logger.error(f"Error generating AI response: {str(e)}")
-            error_msg = str(e).lower()
-
-            # Check for specific error types and provide appropriate responses
-            if "quota" in error_msg or "insufficient_quota" in error_msg:
-                # Quota exceeded - fall back to demo mode
-                from app.services.demo_story_generator import demo_generator
-                demo_responses = {
-                    "dramatic": "🎭 **Enhanced Drama**: Consider adding more tension by having characters face moral dilemmas, introducing unexpected betrayals, or raising the stakes with time pressure. Add visceral descriptions of combat - the clash of steel, the smell of ozone from magic, the thunderous roar of monsters!",
-                    "dialogue": "💬 **Character Dialogue**: Enhance conversations by giving each character unique speech patterns, personal motivations that create conflict, and emotional stakes. Add interruptions, body language descriptions, and subtext that reveals hidden agendas!",
-                    "world": "🏰 **World Building**: Expand your setting with rich sensory details - what do the characters hear, smell, and feel? Add historical context, local customs, mysterious landmarks, and environmental storytelling that makes the world feel lived-in!",
-                    "character": "👥 **Character Development**: Focus on personal growth moments, internal conflicts, and relationships between party members. Show how past experiences influence current decisions and reveal character flaws that create interesting challenges!",
-                    "combat": "⚔️ **Combat Enhancement**: Make battles more tactical and cinematic! Describe the flow of combat, environmental hazards, creative spell usage, and heroic moments. Add consequences that matter beyond just hit points!"
-                }
-
-                # Analyze message for appropriate response
-                message_lower = user_message.lower()
-                if any(word in message_lower for word in ['drama', 'tension', 'exciting', 'suspense']):
-                    demo_text = demo_responses["dramatic"]
-                elif any(word in message_lower for word in ['dialogue', 'conversation', 'character', 'talk']):
-                    demo_text = demo_responses["dialogue"]
-                else:
-                    demo_text = demo_responses["dramatic"]  # Default to dramatic enhancement
-
-                response_text = f"💳 **OpenAI Quota Exceeded**\n\nYour OpenAI API quota has been reached. Using enhanced demo mode:\n\n{demo_text}\n\n🔄 **To restore full AI features:**\n• Check your OpenAI billing at https://platform.openai.com/account/billing\n• Add credits or upgrade your plan\n• Current quota status can be viewed in your OpenAI dashboard"
-
-            elif "model" in error_msg and ("not found" in error_msg or "does not exist" in error_msg):
-                response_text = f"🤖 **Model Access Issue**\n\nThe requested AI model is not available with your API key:\n\n`{str(e)}`\n\n🔧 **Solutions:**\n• Upgrade your OpenAI plan for access to GPT-4 models\n• Check model availability at https://platform.openai.com/docs/models\n• Verify your API key has the necessary permissions"
-
-            else:
-                response_text = f"⚠️ **AI Response Error**\n\nSorry, I encountered an error while processing your request:\n\n`{str(e)}`\n\n🛠️ **Troubleshooting:**\n• Check your internet connection\n• Verify OpenAI service status\n• Ensure your API key is valid and has sufficient credits"
-
-            response = {"text": response_text}
-            await sio.emit("response", response, room=sid)
 
     except Exception as e:
         logger.error(f"Error handling message from {sid}: {e}")
