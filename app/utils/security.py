@@ -1,19 +1,336 @@
-"""Security utilities for input validation and sanitization."""
+"""
+Security utilities for the DNDStoryTelling application.
+Provides encryption, file validation, rate limiting, and security headers.
+"""
 
+import hashlib
+import hmac
 import html
 import logging
+import magic
+import os
 import re
+import time
+from collections import defaultdict
+from datetime import datetime, timedelta
 from functools import wraps
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Set, Tuple, Union
+
+from cryptography.fernet import Fernet
+from fastapi import HTTPException, Request, status
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
 logger = logging.getLogger(__name__)
+
+# Security configuration
+ALLOWED_AUDIO_MIME_TYPES = {
+    'audio/mpeg', 'audio/wav', 'audio/x-wav', 'audio/mp4', 'audio/m4a',
+    'audio/ogg', 'audio/flac', 'audio/aac', 'audio/webm'
+}
+
+ALLOWED_TEXT_MIME_TYPES = {
+    'text/plain', 'text/markdown', 'application/rtf'
+}
+
+MAX_FILENAME_LENGTH = 255
+DANGEROUS_EXTENSIONS = {
+    '.exe', '.bat', '.cmd', '.scr', '.pif', '.com', '.dll', '.vbs',
+    '.js', '.jar', '.sh', '.ps1', '.php', '.asp', '.jsp'
+}
+
+# File signature validation (magic numbers)
+AUDIO_SIGNATURES = {
+    b'ID3': 'audio/mpeg',  # MP3
+    b'RIFF': 'audio/wav',  # WAV (check for WAVE)
+    b'fLaC': 'audio/flac', # FLAC
+    b'OggS': 'audio/ogg',  # OGG
+    b'\x00\x00\x00 ftypM4A ': 'audio/m4a',  # M4A
+}
 
 
 class SecurityError(Exception):
     """Custom exception for security-related errors."""
-
     pass
+
+
+class SecureCredentialManager:
+    """Manages encrypted storage and retrieval of sensitive credentials."""
+
+    def __init__(self, encryption_key: Optional[str] = None):
+        """Initialize with encryption key from environment or generate new one."""
+        if encryption_key:
+            self.key = encryption_key.encode()[:32].ljust(32, b'0')  # Ensure 32 bytes
+        else:
+            # Use environment key or generate
+            env_key = os.getenv('ENCRYPTION_KEY')
+            if env_key:
+                self.key = env_key.encode()[:32].ljust(32, b'0')
+            else:
+                self.key = Fernet.generate_key()
+                logger.warning("No encryption key provided, generated temporary key")
+
+        self.cipher = Fernet(self.key)
+
+    def encrypt_credential(self, credential: str) -> str:
+        """Encrypt a credential string."""
+        if not credential:
+            return ""
+        return self.cipher.encrypt(credential.encode()).decode()
+
+    def decrypt_credential(self, encrypted_credential: str) -> str:
+        """Decrypt a credential string."""
+        if not encrypted_credential:
+            return ""
+        try:
+            return self.cipher.decrypt(encrypted_credential.encode()).decode()
+        except Exception as e:
+            logger.error(f"Failed to decrypt credential: {e}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Invalid credential encryption"
+            )
+
+
+class FileSecurityValidator:
+    """Comprehensive file security validation."""
+
+    def __init__(self):
+        try:
+            self.magic_checker = magic.Magic(mime=True)
+        except Exception as e:
+            logger.warning(f"python-magic not available: {e}, using basic validation")
+            self.magic_checker = None
+
+    def validate_file_security(self, file_path: Path, filename: str, content_type: str) -> Dict[str, any]:
+        """
+        Comprehensive file security validation.
+
+        Returns:
+            Dict with validation results and security info
+        """
+        results = {
+            'is_safe': False,
+            'detected_type': None,
+            'size_bytes': 0,
+            'filename_safe': False,
+            'content_safe': False,
+            'signature_valid': False,
+            'warnings': [],
+            'errors': []
+        }
+
+        try:
+            # File size check
+            if file_path.exists():
+                results['size_bytes'] = file_path.stat().st_size
+
+                # Check for extremely large files that might be attacks
+                if results['size_bytes'] > 10 * 1024 * 1024 * 1024:  # 10GB
+                    results['errors'].append("File too large (>10GB)")
+                    return results
+
+            # Filename security validation
+            results['filename_safe'] = self._validate_filename(filename)
+            if not results['filename_safe']:
+                results['errors'].append("Unsafe filename detected")
+
+            # MIME type validation using python-magic if available
+            if file_path.exists() and self.magic_checker:
+                try:
+                    detected_mime = self.magic_checker.from_file(str(file_path))
+                    results['detected_type'] = detected_mime
+
+                    # Check if detected type matches claimed type
+                    if detected_mime != content_type:
+                        results['warnings'].append(f"MIME type mismatch: claimed {content_type}, detected {detected_mime}")
+
+                    # Validate against allowed types
+                    if detected_mime in ALLOWED_AUDIO_MIME_TYPES or detected_mime in ALLOWED_TEXT_MIME_TYPES:
+                        results['content_safe'] = True
+                    else:
+                        results['errors'].append(f"File type not allowed: {detected_mime}")
+                except Exception as e:
+                    logger.warning(f"MIME detection failed: {e}")
+                    results['content_safe'] = content_type in ALLOWED_AUDIO_MIME_TYPES or content_type in ALLOWED_TEXT_MIME_TYPES
+            else:
+                # Fallback to claimed type validation
+                results['content_safe'] = content_type in ALLOWED_AUDIO_MIME_TYPES or content_type in ALLOWED_TEXT_MIME_TYPES
+                results['detected_type'] = content_type
+
+            # File signature validation
+            results['signature_valid'] = self._validate_file_signature(file_path)
+            if not results['signature_valid']:
+                results['warnings'].append("File signature validation failed")
+
+            # Overall safety assessment
+            results['is_safe'] = (
+                results['filename_safe'] and
+                results['content_safe'] and
+                len(results['errors']) == 0
+            )
+
+        except Exception as e:
+            logger.error(f"File security validation error: {e}")
+            results['errors'].append(f"Validation error: {str(e)}")
+
+        return results
+
+    def _validate_filename(self, filename: str) -> bool:
+        """Validate filename for security issues."""
+        if not filename or len(filename) > MAX_FILENAME_LENGTH:
+            return False
+
+        # Check for dangerous extensions
+        file_ext = Path(filename).suffix.lower()
+        if file_ext in DANGEROUS_EXTENSIONS:
+            return False
+
+        # Check for path traversal attempts
+        if '..' in filename or '/' in filename or '\\' in filename:
+            return False
+
+        # Check for null bytes and control characters
+        if '\x00' in filename or any(ord(c) < 32 for c in filename if c not in '\t\n\r'):
+            return False
+
+        return True
+
+    def _validate_file_signature(self, file_path: Path) -> bool:
+        """Validate file signature against known audio/text formats."""
+        if not file_path.exists():
+            return False
+
+        try:
+            with open(file_path, 'rb') as f:
+                header = f.read(32)  # Read first 32 bytes
+
+            # Check against known audio signatures
+            for signature in AUDIO_SIGNATURES:
+                if header.startswith(signature):
+                    return True
+
+                # Special case for WAV files
+                if signature == b'RIFF' and header.startswith(b'RIFF') and b'WAVE' in header:
+                    return True
+
+            # For text files, check if it's valid UTF-8
+            try:
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    f.read(1024)  # Try to read first 1KB as text
+                return True
+            except UnicodeDecodeError:
+                pass
+
+        except Exception as e:
+            logger.error(f"File signature validation error: {e}")
+
+        return False
+
+
+class RateLimiter:
+    """In-memory rate limiter for API endpoints."""
+
+    def __init__(self):
+        self.requests: Dict[str, List[float]] = defaultdict(list)
+        self.blocked_ips: Dict[str, float] = {}
+
+    def is_allowed(self, client_ip: str, max_requests: int = 100, window_seconds: int = 3600) -> Tuple[bool, Dict[str, any]]:
+        """
+        Check if request is allowed based on rate limiting.
+
+        Args:
+            client_ip: Client IP address
+            max_requests: Maximum requests allowed in window
+            window_seconds: Time window in seconds
+
+        Returns:
+            Tuple of (is_allowed, info_dict)
+        """
+        current_time = time.time()
+
+        # Check if IP is currently blocked
+        if client_ip in self.blocked_ips:
+            if current_time < self.blocked_ips[client_ip]:
+                return False, {
+                    'blocked': True,
+                    'blocked_until': self.blocked_ips[client_ip],
+                    'message': 'IP temporarily blocked due to rate limiting'
+                }
+            else:
+                # Block expired, remove from blocked list
+                del self.blocked_ips[client_ip]
+
+        # Clean old requests outside the window
+        window_start = current_time - window_seconds
+        self.requests[client_ip] = [
+            req_time for req_time in self.requests[client_ip]
+            if req_time > window_start
+        ]
+
+        # Check if limit exceeded
+        request_count = len(self.requests[client_ip])
+        if request_count >= max_requests:
+            # Block IP for 1 hour
+            self.blocked_ips[client_ip] = current_time + 3600
+            return False, {
+                'rate_limited': True,
+                'request_count': request_count,
+                'max_requests': max_requests,
+                'window_seconds': window_seconds,
+                'message': f'Rate limit exceeded: {request_count}/{max_requests} requests in {window_seconds}s'
+            }
+
+        # Add current request
+        self.requests[client_ip].append(current_time)
+
+        return True, {
+            'allowed': True,
+            'request_count': request_count + 1,
+            'max_requests': max_requests,
+            'remaining': max_requests - request_count - 1
+        }
+
+
+class CSRFProtection:
+    """CSRF token generation and validation."""
+
+    def __init__(self, secret_key: str):
+        self.secret_key = secret_key.encode()
+
+    def generate_token(self, session_id: str) -> str:
+        """Generate CSRF token for session."""
+        timestamp = str(int(time.time()))
+        message = f"{session_id}:{timestamp}"
+        signature = hmac.new(
+            self.secret_key,
+            message.encode(),
+            hashlib.sha256
+        ).hexdigest()
+        return f"{timestamp}.{signature}"
+
+    def validate_token(self, token: str, session_id: str, max_age: int = 3600) -> bool:
+        """Validate CSRF token."""
+        try:
+            timestamp_str, signature = token.split('.', 1)
+            timestamp = int(timestamp_str)
+
+            # Check token age
+            if time.time() - timestamp > max_age:
+                return False
+
+            # Verify signature
+            message = f"{session_id}:{timestamp_str}"
+            expected_signature = hmac.new(
+                self.secret_key,
+                message.encode(),
+                hashlib.sha256
+            ).hexdigest()
+
+            return hmac.compare_digest(signature, expected_signature)
+
+        except (ValueError, IndexError):
+            return False
 
 
 class InputValidator:
@@ -285,6 +602,107 @@ class RateLimiter:
         return True
 
 
-# Global instances
+# Enhanced global instances
+credential_manager = SecureCredentialManager()
+file_validator = FileSecurityValidator()
+enhanced_rate_limiter = RateLimiter()
 input_validator = InputValidator()
 rate_limiter = RateLimiter()
+csrf_protection = None  # Initialize in main.py with secret key
+
+
+def get_client_ip(request: Request) -> str:
+    """Extract client IP from request headers."""
+    # Check for forwarded headers first (for proxy/load balancer setups)
+    forwarded_for = request.headers.get('x-forwarded-for')
+    if forwarded_for:
+        return forwarded_for.split(',')[0].strip()
+
+    real_ip = request.headers.get('x-real-ip')
+    if real_ip:
+        return real_ip
+
+    # Fallback to direct connection IP
+    return request.client.host if request.client else 'unknown'
+
+
+async def validate_file_upload(file_path: Path, filename: str, content_type: str, client_ip: str) -> Dict[str, any]:
+    """
+    Comprehensive file upload validation.
+
+    Args:
+        file_path: Path to uploaded file
+        filename: Original filename
+        content_type: Claimed MIME type
+        client_ip: Client IP address
+
+    Returns:
+        Validation result dictionary
+    """
+    # Rate limiting check
+    allowed, rate_info = enhanced_rate_limiter.is_allowed(client_ip, max_requests=10, window_seconds=3600)
+    if not allowed:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail=rate_info.get('message', 'Rate limit exceeded')
+        )
+
+    # File security validation
+    security_results = file_validator.validate_file_security(file_path, filename, content_type)
+
+    if not security_results['is_safe']:
+        # Log security violation
+        logger.warning(f"Unsafe file upload from {client_ip}: {filename}, errors: {security_results['errors']}")
+
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={
+                'message': 'File failed security validation',
+                'errors': security_results['errors'],
+                'warnings': security_results['warnings']
+            }
+        )
+
+    return {
+        'security_results': security_results,
+        'rate_limit_info': rate_info
+    }
+
+
+# Security headers middleware
+SECURITY_HEADERS = {
+    'X-Content-Type-Options': 'nosniff',
+    'X-Frame-Options': 'DENY',
+    'X-XSS-Protection': '1; mode=block',
+    'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
+    'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' ws: wss:",
+    'Referrer-Policy': 'strict-origin-when-cross-origin',
+    'Permissions-Policy': 'geolocation=(), microphone=(), camera=()'
+}
+
+
+def sanitize_filename(filename: str) -> str:
+    """Sanitize filename for safe storage."""
+    if not filename:
+        return "unknown_file"
+
+    # Remove path components
+    filename = Path(filename).name
+
+    # Replace dangerous characters
+    safe_chars = []
+    for char in filename:
+        if char.isalnum() or char in '.-_':
+            safe_chars.append(char)
+        else:
+            safe_chars.append('_')
+
+    sanitized = ''.join(safe_chars)
+
+    # Ensure reasonable length
+    if len(sanitized) > MAX_FILENAME_LENGTH:
+        name, ext = os.path.splitext(sanitized)
+        max_name_len = MAX_FILENAME_LENGTH - len(ext)
+        sanitized = name[:max_name_len] + ext
+
+    return sanitized or "unknown_file"

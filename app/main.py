@@ -178,6 +178,10 @@ app.include_router(auth.router, prefix="/auth", tags=["authentication"])
 app.include_router(story.router, prefix="/story", tags=["story"])
 app.include_router(confluence.router, prefix="/confluence", tags=["confluence"])
 
+# Production system routes
+from app.routes import production
+app.include_router(production.router, tags=["production"])
+
 # Health and monitoring routes
 from app.routes import health
 

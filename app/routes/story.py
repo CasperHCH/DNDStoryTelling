@@ -29,6 +29,7 @@ router = APIRouter(tags=["story"])
 async def upload_file(
     file: UploadFile,
     context: dict,
+    use_production_pipeline: bool = False,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
@@ -59,9 +60,69 @@ async def upload_file(
             max_size_gb = settings.MAX_FILE_SIZE / (1024 * 1024 * 1024)
             raise HTTPException(status_code=413, detail=f"File too large (max {max_size_gb:.1f}GB)")
 
-        logger.info(f"Processing file upload: {file.filename} ({file.content_type}) using {'free services' if use_free_services else 'OpenAI'}")
+        logger.info(f"Processing file upload: {file.filename} ({file.content_type}) using {'production pipeline' if use_production_pipeline else 'free services' if use_free_services else 'OpenAI'}")
 
-        # Initialize services based on configuration
+        # Read file content first
+        content = await file.read()
+
+        # Check if user requested production pipeline
+        if use_production_pipeline:
+            logger.info("Using production pipeline for enhanced processing")
+
+            # Import production system
+            from app.utils.production_integration import production_processor
+            import tempfile
+            from pathlib import Path
+
+            # Save file temporarily
+            with tempfile.NamedTemporaryFile(delete=False, suffix=Path(file.filename).suffix) as temp_file:
+                temp_file.write(content)
+                temp_file_path = Path(temp_file.name)
+
+            try:
+                # Process with production system
+                result = await production_processor.process_dnd_session(
+                    temp_file_path,
+                    str(current_user.id),
+                    context  # Use context as session_metadata
+                )
+
+                # Clean up temp file
+                temp_file_path.unlink()
+
+                if result.success:
+                    # Return production result in compatible format
+                    return {
+                        "story": result.story_result.get('narrative', '') if result.story_result else 'Production processing completed',
+                        "production_result": {
+                            "operation_id": result.operation_id,
+                            "processing_time": result.processing_time_seconds,
+                            "total_cost": result.total_cost,
+                            "audio_quality": {
+                                "original_score": result.original_quality.get('quality_score', 0) if result.original_quality else 0,
+                                "final_score": result.final_quality.get('quality_score', 0) if result.final_quality else 0
+                            },
+                            "speakers_detected": len(result.speaker_analysis.get('speakers', [])) if result.speaker_analysis else 0,
+                            "transcription": result.transcription_result.get('text', '') if result.transcription_result else '',
+                            "warnings": result.warnings,
+                            "enhanced_processing": True
+                        }
+                    }
+                else:
+                    # Production failed, fall back to regular processing
+                    logger.warning(f"Production processing failed: {result.errors}. Falling back to regular processing.")
+                    use_production_pipeline = False
+
+            except Exception as e:
+                logger.error(f"Production processing failed: {e}. Falling back to regular processing.")
+                use_production_pipeline = False
+                # Clean up temp file if it exists
+                try:
+                    temp_file_path.unlink()
+                except:
+                    pass
+
+        # Initialize services based on configuration (fallback or normal processing)
         if use_free_services:
             # Use free service manager
             story_generator = free_service_manager
@@ -70,9 +131,6 @@ async def upload_file(
             # Use traditional OpenAI services
             story_generator = StoryGenerator(current_user.openai_api_key)
             audio_processor = AudioProcessor()
-
-        # Read file content
-        content = await file.read()
 
         # Calculate file hash for caching
         file_hash = calculate_file_hash(content)
