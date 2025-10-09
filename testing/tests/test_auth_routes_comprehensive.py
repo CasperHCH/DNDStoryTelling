@@ -34,19 +34,19 @@ class TestAuthRoutes:
         # Setup mock database session
         mock_session = AsyncMock()
         mock_get_db.return_value.__aenter__.return_value = mock_session
-        
+
         # Mock user from database
         mock_user = MagicMock()
         mock_user.id = 1
         mock_user.username = "testuser"
         mock_user.email = "test@example.com"
         mock_user.hashed_password = "hashed_password"
-        
+
         # Mock the database query result
         mock_result = AsyncMock()
         mock_result.scalar_one_or_none.return_value = mock_user
         mock_session.execute.return_value = mock_result
-        
+
         # Setup other mocks
         mock_verify.return_value = True
         mock_token.return_value = "fake_jwt_token"
@@ -72,7 +72,7 @@ class TestAuthRoutes:
         # Setup mock database session
         mock_session = AsyncMock()
         mock_get_db.return_value.__aenter__.return_value = mock_session
-        
+
         # Mock no user found in database
         mock_result = AsyncMock()
         mock_result.scalar_one_or_none.return_value = None
@@ -116,15 +116,15 @@ class TestAuthRoutes:
         # Setup mock database session
         mock_session = AsyncMock()
         mock_get_db.return_value.__aenter__.return_value = mock_session
-        
+
         # Mock that user doesn't exist (both queries return None)
         mock_result = AsyncMock()
         mock_result.scalar_one_or_none.return_value = None
         mock_session.execute.return_value = mock_result
-        
+
         # Mock password hashing
         mock_hash.return_value = "hashed_password"
-        
+
         # Mock user creation (add method and flush/refresh)
         mock_session.add = MagicMock()
         mock_session.flush = AsyncMock()
@@ -149,12 +149,12 @@ class TestAuthRoutes:
         # Setup mock database session
         mock_session = AsyncMock()
         mock_get_db.return_value.__aenter__.return_value = mock_session
-        
+
         # Mock existing user found (first query for username)
         mock_existing_user = MagicMock()
         mock_existing_user.id = 1
         mock_existing_user.username = "existinguser"
-        
+
         mock_result = AsyncMock()
         mock_result.scalar_one_or_none.return_value = mock_existing_user
         mock_session.execute.return_value = mock_result
@@ -177,12 +177,12 @@ class TestAuthRoutes:
         # Setup mock database session
         mock_session = AsyncMock()
         mock_get_db.return_value.__aenter__.return_value = mock_session
-        
+
         # First call (username check) returns None, second call (email check) returns existing user
         mock_existing_user = MagicMock()
         mock_existing_user.id = 1
         mock_existing_user.email = "existing@example.com"
-        
+
         mock_result = AsyncMock()
         # First call returns None (username not taken), second call returns user (email taken)
         mock_result.scalar_one_or_none.side_effect = [None, mock_existing_user]

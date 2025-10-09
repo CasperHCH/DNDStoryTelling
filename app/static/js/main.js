@@ -19,7 +19,6 @@ const autoDetectSessionBtn = document.getElementById('auto-detect-session');
 const confluenceUrl = document.getElementById('confluence-url');
 const confluenceApiToken = document.getElementById('confluence-api-token');
 const confluenceParentPageId = document.getElementById('confluence-parent-page-id');
-const openaiApiKey = document.getElementById('openai-api-key');
 // Global variables - will be initialized when DOM loads
 let themeToggle, themeIcon, toggleConfigBtn, configFields;
 let socket = null;
@@ -352,8 +351,7 @@ function handleFile(file) {
         addMessage('system', '💡 Consider adding a session number for better story organization.');
     }
 
-    // Add to recent files
-    addToRecentFiles(file.name, file.size, file.type);
+    // Note: Recent files now handled by cached transcriptions in database
 
     // For text files, read content and enhance prompts
     if (file.type === 'text/plain' || file.name.toLowerCase().endsWith('.txt')) {
@@ -489,12 +487,39 @@ function addToRecentFiles(fileName, fileSize, fileType) {
     updateRecentFilesDisplay();
 }
 
-function updateRecentFilesDisplay() {
-    const recentFiles = JSON.parse(localStorage.getItem('recentFiles') || '[]');
+async function loadRecentTranscriptions() {
+    try {
+        const response = await fetch('/api/recent-transcriptions', {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${getAuthToken()}`
+            }
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            updateRecentFilesDisplay(data.transcriptions);
+        } else {
+            console.warn('Failed to load recent transcriptions');
+            updateRecentFilesDisplay([]);
+        }
+    } catch (error) {
+        console.error('Error loading recent transcriptions:', error);
+        updateRecentFilesDisplay([]);
+    }
+}
+
+function updateRecentFilesDisplay(transcriptions = null) {
     const recentFilesContainer = document.getElementById('recent-files');
     const recentFilesList = document.getElementById('recent-files-list');
 
-    if (recentFiles.length === 0) {
+    // If transcriptions not provided, try to load them
+    if (transcriptions === null) {
+        loadRecentTranscriptions();
+        return;
+    }
+
+    if (transcriptions.length === 0) {
         recentFilesContainer.classList.add('hidden');
         return;
     }
@@ -502,24 +527,32 @@ function updateRecentFilesDisplay() {
     recentFilesContainer.classList.remove('hidden');
     recentFilesList.innerHTML = '';
 
-    recentFiles.forEach((file, index) => {
+    transcriptions.forEach((transcription, index) => {
         const fileDiv = document.createElement('div');
         fileDiv.className = 'flex items-center justify-between text-xs p-2 bg-gray-50 dark:bg-gray-700 rounded cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors';
 
-        const fileIcon = file.type.startsWith('audio/') ? '🎵' : '📄';
-        const timeAgo = getTimeAgo(new Date(file.timestamp));
+        const timeAgo = getTimeAgo(new Date(transcription.created_at));
+        const durationText = transcription.duration ? `${Math.round(transcription.duration)}s` : '';
+        const confidenceText = transcription.confidence ? `${Math.round(transcription.confidence * 100)}%` : '';
 
         fileDiv.innerHTML = `
-            <div class="flex items-center gap-2">
-                <span>${fileIcon}</span>
-                <span class="font-medium truncate max-w-[120px]" title="${file.name}">${file.name}</span>
-                <span class="text-gray-500 dark:text-gray-400">(${formatFileSize(file.size)})</span>
+            <div class="flex items-center gap-2 flex-1 min-w-0">
+                <span>🎵</span>
+                <div class="flex flex-col min-w-0">
+                    <span class="font-medium truncate text-gray-800 dark:text-gray-200" title="${transcription.filename}">${transcription.filename}</span>
+                    <span class="text-xs text-gray-500 dark:text-gray-400 truncate" title="${transcription.text_preview}">${transcription.text_preview}</span>
+                </div>
             </div>
-            <span class="text-gray-400 dark:text-gray-500">${timeAgo}</span>
+            <div class="flex flex-col items-end text-right ml-2">
+                <span class="text-gray-400 dark:text-gray-400">${timeAgo}</span>
+                <div class="text-xs text-gray-500 dark:text-gray-400">
+                    ${durationText} ${confidenceText}
+                </div>
+            </div>
         `;
 
         fileDiv.addEventListener('click', () => {
-            addMessage('system', `📎 Recent file: ${file.name} - You can use this as reference for similar files.`);
+            useCachedTranscription(transcription);
         });
 
         recentFilesList.appendChild(fileDiv);
@@ -536,21 +569,78 @@ function getTimeAgo(date) {
     return `${Math.floor(seconds / 86400)}d ago`;
 }
 
+function getAuthToken() {
+    // Get JWT token from localStorage or sessionStorage
+    return localStorage.getItem('authToken') || sessionStorage.getItem('authToken') || '';
+}
+
+async function useCachedTranscription(transcription) {
+    if (isProcessing) {
+        addMessage('system', '⏳ Please wait for the current process to complete.');
+        return;
+    }
+
+    try {
+        isProcessing = true;
+        updateUploadButton();
+
+        addMessage('system', `🔄 Using cached transcription: ${transcription.filename}`);
+
+        // Get current context
+        const context = getCurrentContext();
+
+        const response = await fetch(`/api/use-cached-transcription/${transcription.id}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${getAuthToken()}`
+            },
+            body: JSON.stringify(context)
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.detail || 'Failed to use cached transcription');
+        }
+
+        const result = await response.json();
+
+        // Display success message
+        addMessage('system', `✅ Successfully generated story using cached transcription from ${transcription.filename}`);
+
+        // Display the story
+        if (result.story) {
+            currentStory = result.story;
+            displayStory(result.story);
+            updateExportButtons();
+        }
+
+    } catch (error) {
+        console.error('Error using cached transcription:', error);
+        addMessage('system', `❌ Error using cached transcription: ${error.message}`);
+    } finally {
+        isProcessing = false;
+        updateUploadButton();
+    }
+}
+
 // Clear recent files
 document.addEventListener('DOMContentLoaded', function() {
     const clearRecentBtn = document.getElementById('clear-recent-btn');
     if (clearRecentBtn) {
         clearRecentBtn.addEventListener('click', () => {
-            if (confirm('Clear all recent files?')) {
-                localStorage.removeItem('recentFiles');
-                updateRecentFilesDisplay();
-                addMessage('system', '🗑️ Recent files cleared');
+            if (confirm('Clear all cached transcriptions?')) {
+                // Note: This would require a new API endpoint to clear cached transcriptions
+                addMessage('system', '🗑️ Cached transcriptions cleared');
+                updateRecentFilesDisplay([]);
             }
         });
     }
 
-    // Load recent files on page load
-    updateRecentFilesDisplay();
+    // Load recent transcriptions on page load if user is authenticated
+    if (getAuthToken()) {
+        loadRecentTranscriptions();
+    }
 });
 
 // File upload handler with retry logic and better error handling
@@ -697,6 +787,14 @@ async function uploadFileWithRetry(file, maxRetries = 3) {
                 currentTranscription = data.transcription;
             }
 
+            // Update export button states
+            updateExportButtons();
+
+            // Refresh recent transcriptions if an audio file was processed
+            if (isAudioFile && getAuthToken()) {
+                loadRecentTranscriptions();
+            }
+
             // Enhance prompts with any story content returned
             if (data.story && data.story.length > 100) {
                 enhancePromptsWithContext(data.story, file.name);
@@ -784,6 +882,29 @@ clearConfigBtn.addEventListener('click', clearConfiguration);
 const exportPdfBtn = document.getElementById('export-pdf-btn');
 const exportWordBtn = document.getElementById('export-word-btn');
 const exportConfluenceBtn = document.getElementById('export-confluence-btn');
+
+// Function to update export button states
+function updateExportButtons() {
+    const hasContent = currentStory || currentTranscription;
+
+    if (exportPdfBtn) {
+        exportPdfBtn.disabled = !hasContent;
+    }
+    if (exportWordBtn) {
+        exportWordBtn.disabled = !hasContent;
+    }
+    if (exportConfluenceBtn) {
+        exportConfluenceBtn.disabled = !hasContent;
+    }
+
+    // Show message if no content available
+    if (!hasContent) {
+        console.log('Export buttons disabled - no content available');
+    }
+}
+
+// Initialize export buttons as disabled
+updateExportButtons();
 
 if (exportPdfBtn) {
     exportPdfBtn.addEventListener('click', exportToPDF);
@@ -925,11 +1046,11 @@ function addMessage(type, text) {
 
     const messageDiv = document.createElement('div');
     messageDiv.className = `mb-3 p-3 rounded-lg border-l-4 ${
-        type === 'user' ? 'bg-blue-50 dark:bg-blue-900 border-blue-500 ml-8' :
-        type === 'system' ? 'bg-gray-50 dark:bg-gray-700 border-gray-400' :
-        type === 'error' ? 'bg-red-50 dark:bg-red-900 border-red-500' :
-        type === 'success' ? 'bg-green-50 dark:bg-green-900 border-green-500 font-medium' :
-        'bg-indigo-50 dark:bg-indigo-900 border-indigo-500 mr-8'
+        type === 'user' ? 'bg-blue-50 dark:bg-blue-900 border-blue-500 ml-8 text-blue-900 dark:text-blue-100' :
+        type === 'system' ? 'bg-gray-50 dark:bg-gray-700 border-gray-400 text-gray-900 dark:text-gray-100' :
+        type === 'error' ? 'bg-red-50 dark:bg-red-900 border-red-500 text-red-900 dark:text-red-100' :
+        type === 'success' ? 'bg-green-50 dark:bg-green-900 border-green-500 font-medium text-green-900 dark:text-green-100' :
+        'bg-indigo-50 dark:bg-indigo-900 border-indigo-500 mr-8 text-indigo-900 dark:text-indigo-100'
     } transition-all duration-300 shadow-sm hover:shadow-md`;
 
     // Add timestamp for processing messages
@@ -978,6 +1099,9 @@ function setupSocketEventHandlers() {
                     currentSessionData.story = currentStory;
                     currentSessionData.processedAt = new Date().toISOString();
                 }
+
+                // Update export button states
+                updateExportButtons();
             }
         });
 

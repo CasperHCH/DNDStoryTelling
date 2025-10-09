@@ -4,8 +4,9 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, Field, validator
-from sqlalchemy import JSON, Column, DateTime, Float, Integer, String, Text
+from sqlalchemy import JSON, Column, DateTime, Float, ForeignKey, Integer, String, Text
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import relationship
 
 from app.models.database import Base
 
@@ -126,7 +127,9 @@ class AudioTranscription(Base):
     __tablename__ = "audio_transcriptions"
 
     id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
     filename = Column(String(255), nullable=False)
+    file_hash = Column(String(64), nullable=False, index=True)  # SHA-256 hash for deduplication
     text = Column(Text, nullable=False)
     language = Column(String(10), nullable=False)
     confidence = Column(Float, nullable=False)
@@ -135,6 +138,9 @@ class AudioTranscription(Base):
     file_size = Column(Integer, nullable=True)
     transcription_metadata = Column(JSON, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+    # Relationship to user
+    user = relationship("User", back_populates="audio_transcriptions")
 
     def to_transcription_result(self) -> AudioTranscriptionResult:
         """Convert database model to AudioTranscriptionResult."""

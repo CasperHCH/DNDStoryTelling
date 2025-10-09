@@ -31,6 +31,19 @@ class DemoStoryGenerator:
             ]
         }
 
+    async def generate_story(self, text: str, context: Dict[str, Any] = None) -> str:
+        """Generate story using demo mode - compatible with free service manager"""
+        session_name = "Demo Session"
+        if context and 'session_name' in context:
+            session_name = context['session_name']
+        return self.enhance_story(text, session_name)
+
+    async def process_audio(self, audio_path: str) -> str:
+        """Process audio using demo mode - fallback when used as unified service"""
+        from app.services.demo_audio_processor import DemoAudioProcessor
+        demo_audio = DemoAudioProcessor()
+        return await demo_audio.process_audio(audio_path)
+
     def enhance_story(self, original_text: str, session_name: str = "Unknown Session") -> str:
         """Create an enhanced version of the original D&D session text"""
 
@@ -108,7 +121,7 @@ class DemoStoryGenerator:
 
 ---
 
-💡 **Note:** This is a demo enhancement. With a configured OpenAI API key, you would receive even more sophisticated AI-generated improvements including character analysis, plot development, and personalized narrative enhancements.
+💡 **Free Version Active:** This is a complete free AI enhancement! For even more advanced features, you can optionally install Ollama for local AI processing that never leaves your computer.
 """
 
         return enhanced_story

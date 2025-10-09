@@ -21,6 +21,10 @@
                 <span class="text-green-300">✓</span>
                 <span>Confluence Export</span>
             </div>
+            <div class="flex items-center gap-2 bg-green-500 bg-opacity-30 px-3 py-1 rounded-full border border-green-300">
+                <span class="text-green-200">🆓</span>
+                <span class="font-medium">FREE VERSION</span>
+            </div>
         </div>
     </div>
 </div>
@@ -185,7 +189,7 @@
                 <div class="text-6xl mb-4 group-hover:scale-110 transition-transform duration-300">🎤</div>
                 <h3 class="text-lg font-semibold text-gray-800 dark:text-white mb-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">Drop your D&D session here</h3>
                 <p class="text-gray-600 dark:text-gray-400 mb-2">or click to browse files</p>
-                <p class="text-xs text-gray-500 dark:text-gray-500 mb-4">Supports files up to 5GB for full session recordings</p>
+                <p class="text-xs text-gray-500 dark:text-gray-300 mb-4">Supports files up to 5GB for full session recordings</p>
                 <div class="flex flex-wrap justify-center gap-2 mb-4">
                     <span class="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300 px-3 py-1 rounded-full text-xs">MP3</span>
                     <span class="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300 px-3 py-1 rounded-full text-xs">WAV</span>
@@ -259,17 +263,20 @@
                 </button>
             </div>
 
-            <!-- Recent Files Section -->
+            <!-- Recent Transcriptions Section -->
             <div id="recent-files" class="mt-6 pt-4 border-t border-gray-200 dark:border-gray-600 hidden">
                 <div class="flex items-center justify-between mb-3">
                     <h3 class="font-semibold text-gray-800 dark:text-white flex items-center gap-2">
-                        <span>🕒</span>
-                        Recent Files
+                        <span>�</span>
+                        Recent Transcriptions
                     </h3>
-                    <button id="clear-recent-btn" class="text-sm text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 transition-colors">Clear</button>
+                    <button id="clear-recent-btn" class="text-sm text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 transition-colors" title="Clear cached transcriptions">Clear</button>
                 </div>
-                <div id="recent-files-list" class="space-y-2 max-h-32 overflow-y-auto">
-                    <!-- Recent files will be populated here -->
+                <div class="text-xs text-gray-600 dark:text-gray-400 mb-2">
+                    💡 Click to reuse transcriptions without re-processing audio files
+                </div>
+                <div id="recent-files-list" class="space-y-2 max-h-40 overflow-y-auto">
+                    <!-- Recent transcriptions will be populated here -->
                 </div>
             </div>
         </div>
@@ -319,8 +326,8 @@
                             <div class="flex items-center gap-3">
                                 <div class="w-10 h-10 bg-gradient-to-r from-red-500 to-orange-600 rounded-full flex items-center justify-center text-white font-bold text-sm">🔥</div>
                                 <div class="flex-1">
-                                    <div class="font-semibold text-red-800 dark:text-red-300 group-hover:text-red-900 dark:group-hover:text-red-200">Drama & Tension</div>
-                                    <div class="text-xs text-red-600 dark:text-red-400">Add excitement and suspense</div>
+                                    <div class="font-semibold text-red-800 dark:text-red-100 group-hover:text-red-900 dark:group-hover:text-red-50">Drama & Tension</div>
+                                    <div class="text-xs text-red-600 dark:text-red-200">Add excitement and suspense</div>
                                 </div>
                             </div>
                         </button>
@@ -330,8 +337,8 @@
                             <div class="flex items-center gap-3">
                                 <div class="w-10 h-10 bg-gradient-to-r from-blue-500 to-cyan-600 rounded-full flex items-center justify-center text-white font-bold text-sm">💬</div>
                                 <div class="flex-1">
-                                    <div class="font-semibold text-blue-800 dark:text-blue-300 group-hover:text-blue-900 dark:group-hover:text-blue-200">Character Dialogue</div>
-                                    <div class="text-xs text-blue-600 dark:text-blue-400">Improve conversations and roleplay</div>
+                                    <div class="font-semibold text-blue-800 dark:text-blue-100 group-hover:text-blue-900 dark:group-hover:text-blue-50">Character Dialogue</div>
+                                    <div class="text-xs text-blue-600 dark:text-blue-200">Improve conversations and roleplay</div>
                                 </div>
                             </div>
                         </button>
@@ -341,8 +348,8 @@
                             <div class="flex items-center gap-3">
                                 <div class="w-10 h-10 bg-gradient-to-r from-green-500 to-emerald-600 rounded-full flex items-center justify-center text-white font-bold text-sm">🏰</div>
                                 <div class="flex-1">
-                                    <div class="font-semibold text-green-800 dark:text-green-300 group-hover:text-green-900 dark:group-hover:text-green-200">World Building</div>
-                                    <div class="text-xs text-green-600 dark:text-green-400">Enhance settings and environments</div>
+                                    <div class="font-semibold text-green-800 dark:text-green-100 group-hover:text-green-900 dark:group-hover:text-green-50">World Building</div>
+                                    <div class="text-xs text-green-600 dark:text-green-200">Enhance settings and environments</div>
                                 </div>
                             </div>
                         </button>
@@ -352,8 +359,8 @@
                             <div class="flex items-center gap-3">
                                 <div class="w-10 h-10 bg-gradient-to-r from-purple-500 to-indigo-600 rounded-full flex items-center justify-center text-white font-bold text-sm">👤</div>
                                 <div class="flex-1">
-                                    <div class="font-semibold text-purple-800 dark:text-purple-300 group-hover:text-purple-900 dark:group-hover:text-purple-200">Character Development</div>
-                                    <div class="text-xs text-purple-600 dark:text-purple-400">Deepen personalities and backstories</div>
+                                    <div class="font-semibold text-purple-800 dark:text-purple-100 group-hover:text-purple-900 dark:group-hover:text-purple-50">Character Development</div>
+                                    <div class="text-xs text-purple-600 dark:text-purple-200">Deepen personalities and backstories</div>
                                 </div>
                             </div>
                         </button>
@@ -363,8 +370,8 @@
                             <div class="flex items-center gap-3">
                                 <div class="w-10 h-10 bg-gradient-to-r from-yellow-500 to-orange-600 rounded-full flex items-center justify-center text-white font-bold text-sm">⚔️</div>
                                 <div class="flex-1">
-                                    <div class="font-semibold text-yellow-800 dark:text-yellow-300 group-hover:text-yellow-900 dark:group-hover:text-yellow-200">Combat & Action</div>
-                                    <div class="text-xs text-yellow-600 dark:text-yellow-400">Enhance battles and action scenes</div>
+                                    <div class="font-semibold text-yellow-800 dark:text-yellow-100 group-hover:text-yellow-900 dark:group-hover:text-yellow-50">Combat & Action</div>
+                                    <div class="text-xs text-yellow-600 dark:text-yellow-200">Enhance battles and action scenes</div>
                                 </div>
                             </div>
                         </button>

@@ -3,6 +3,7 @@
 from datetime import datetime
 
 from sqlalchemy import Boolean, Column, DateTime, Integer, String, Text
+from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
 from .database import Base
@@ -38,6 +39,9 @@ class User(Base):
     preferred_audio_model = Column(String(50), default="base")
     max_file_size_mb = Column(Integer, default=50)
 
+    # Relationships
+    audio_transcriptions = relationship("AudioTranscription", back_populates="user", cascade="all, delete-orphan")
+
     def __repr__(self) -> str:
         return f"<User(id={self.id}, username='{self.username}', email='{self.email}')>"
 
@@ -55,3 +59,7 @@ class User(Base):
         return bool(
             self.confluence_api_token and self.confluence_url and self.confluence_parent_page_id
         )
+
+    def get_recent_transcriptions(self, limit: int = 5):
+        """Get recent audio transcriptions for this user."""
+        return sorted(self.audio_transcriptions, key=lambda t: t.created_at, reverse=True)[:limit]

@@ -91,8 +91,8 @@ class Settings(BaseSettings):
     SOCKETIO_MAX_HTTP_BUFFER_SIZE: int = Field(default=1000000)  # 1MB
 
     # Free Services Configuration
-    AI_SERVICE: str = Field(default="openai")  # Options: "openai", "ollama", "demo"
-    AUDIO_SERVICE: str = Field(default="openai")  # Options: "openai", "whisper_cpp", "demo"
+    AI_SERVICE: str = Field(default="demo")  # Options: "openai", "ollama", "demo"
+    AUDIO_SERVICE: str = Field(default="demo")  # Options: "openai", "whisper_cpp", "demo"
     USE_SQLITE: bool = Field(default=False)  # Use SQLite instead of PostgreSQL
     DEMO_MODE_FALLBACK: bool = Field(default=True)  # Fall back to demo mode on errors
 
