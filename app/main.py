@@ -479,6 +479,10 @@ async def handle_message(sid, data):
                 from app.services.free_service_manager import free_service_manager
                 from app.models.story import StoryContext
 
+                # Check if user is requesting story modification/enhancement
+                story_context = data.get('currentStory', '')
+                session_data = data.get('sessionData', {})
+                
                 # Create a context for the chat
                 context = StoryContext(
                     session_name="Chat Session",
@@ -488,8 +492,33 @@ async def handle_message(sid, data):
                     campaign_notes="Interactive chat assistance for D&D story development"
                 )
 
-                # Create a specialized prompt for chat assistance
-                chat_prompt = f"""You are an AI assistant specializing in D&D campaign development and storytelling.
+                # Determine if this is a story modification request
+                modification_keywords = [
+                    'rewrite', 'improve', 'enhance', 'modify', 'change', 'update', 
+                    'add to', 'expand', 'revise', 'edit', 'fix', 'better', 'more'
+                ]
+                is_story_modification = any(keyword in user_message.lower() for keyword in modification_keywords)
+                
+                if story_context and is_story_modification:
+                    # Create a specialized prompt for story modification
+                    chat_prompt = f"""You are an AI assistant specializing in D&D campaign development and storytelling.
+
+CURRENT STORY CONTENT:
+{story_context[:2000]}{'...' if len(story_context) > 2000 else ''}
+
+USER REQUEST: "{user_message}"
+
+Please provide an enhanced/modified version of the story that addresses the user's request. Focus on:
+- Maintaining narrative continuity and consistency
+- Enhancing the specific elements mentioned by the user
+- Improving D&D gameplay elements (combat, roleplay, world-building)
+- Keeping the same general structure while making requested improvements
+- Adding vivid details, better dialogue, or enhanced descriptions as requested
+
+Provide the improved story content that incorporates the user's suggestions."""
+                else:
+                    # Create a specialized prompt for general chat assistance
+                    chat_prompt = f"""You are an AI assistant specializing in D&D campaign development and storytelling.
 
 The user is asking: "{user_message}"
 
@@ -504,9 +533,14 @@ Keep your response engaging and practical for D&D gameplay."""
 
                 # Generate AI response using free services
                 ai_response = await free_service_manager.generate_story(chat_prompt, context)
+                
+                # Check if this was a story modification and mark it as such
+                response_data = {"text": ai_response}
+                if story_context and is_story_modification:
+                    response_data["isStoryModification"] = True
+                    response_data["originalStory"] = story_context
 
-                response = {"text": ai_response}
-                await sio.emit("response", response, room=sid)
+                await sio.emit("response", response_data, room=sid)
 
                 logger.info(f"Free service AI response sent to {sid} ({len(ai_response)} characters)")
                 return
@@ -520,6 +554,9 @@ Keep your response engaging and practical for D&D gameplay."""
                 from app.services.story_generator import StoryGenerator
                 from app.models.story import StoryContext
 
+                # Check if user is requesting story modification/enhancement
+                story_context = data.get('currentStory', '')
+                
                 # Initialize story generator
                 story_generator = StoryGenerator(openai_key)
 
@@ -532,8 +569,33 @@ Keep your response engaging and practical for D&D gameplay."""
                     campaign_notes="Interactive chat assistance for D&D story development"
                 )
 
-                # Create a specialized prompt for chat assistance
-                chat_prompt = f"""You are an AI assistant specializing in D&D campaign development and storytelling.
+                # Determine if this is a story modification request
+                modification_keywords = [
+                    'rewrite', 'improve', 'enhance', 'modify', 'change', 'update', 
+                    'add to', 'expand', 'revise', 'edit', 'fix', 'better', 'more'
+                ]
+                is_story_modification = any(keyword in user_message.lower() for keyword in modification_keywords)
+                
+                if story_context and is_story_modification:
+                    # Create a specialized prompt for story modification
+                    chat_prompt = f"""You are an AI assistant specializing in D&D campaign development and storytelling.
+
+CURRENT STORY CONTENT:
+{story_context[:2000]}{'...' if len(story_context) > 2000 else ''}
+
+USER REQUEST: "{user_message}"
+
+Please provide an enhanced/modified version of the story that addresses the user's request. Focus on:
+- Maintaining narrative continuity and consistency
+- Enhancing the specific elements mentioned by the user
+- Improving D&D gameplay elements (combat, roleplay, world-building)
+- Keeping the same general structure while making requested improvements
+- Adding vivid details, better dialogue, or enhanced descriptions as requested
+
+Provide the improved story content that incorporates the user's suggestions."""
+                else:
+                    # Create a specialized prompt for general chat assistance
+                    chat_prompt = f"""You are an AI assistant specializing in D&D campaign development and storytelling.
 
 The user is asking: "{user_message}"
 
@@ -549,8 +611,13 @@ Keep your response engaging and practical for D&D gameplay."""
                 # Generate AI response using the story generator
                 ai_response = await story_generator.generate_story(chat_prompt, context)
 
-                response = {"text": ai_response}
-                await sio.emit("response", response, room=sid)
+                # Check if this was a story modification and mark it as such
+                response_data = {"text": ai_response}
+                if story_context and is_story_modification:
+                    response_data["isStoryModification"] = True
+                    response_data["originalStory"] = story_context
+
+                await sio.emit("response", response_data, room=sid)
 
                 logger.info(f"OpenAI response sent to {sid} ({len(ai_response)} characters)")
                 return

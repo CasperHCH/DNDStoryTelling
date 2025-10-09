@@ -1022,7 +1022,13 @@ function sendMessage() {
 
     addMessage('user', message);
     if (socket) {
-        socket.emit('message', { text: message });
+        // Include current story and session data for context-aware responses
+        const messageData = {
+            text: message,
+            currentStory: currentStory || '',
+            sessionData: currentSessionData || {}
+        };
+        socket.emit('message', messageData);
     } else {
         addMessage('system', 'Chat functionality not available - Socket.IO not connected');
     }
@@ -1085,9 +1091,27 @@ function setupSocketEventHandlers() {
         socket.on('response', (data) => {
             addMessage('assistant', data.text);
 
-            // If this is a substantial response, consider it part of the session story
-            if (data.text && data.text.length > 200) {
-                // Append to current story if it exists, or create new story content
+            // Handle story modifications differently from regular chat responses
+            if (data.isStoryModification && data.text) {
+                // Replace the current story with the modified version
+                currentStory = data.text;
+                addMessage('system', '✨ Story has been modified based on your request!');
+                
+                // Update session data
+                if (currentSessionData) {
+                    currentSessionData.story = currentStory;
+                    currentSessionData.processedAt = new Date().toISOString();
+                }
+
+                // Update export button states
+                updateExportButtons();
+                
+                // Optionally show a preview of the change
+                if (data.originalStory && data.originalStory !== data.text) {
+                    addMessage('system', '📝 Story updated! Use export options to save your enhanced version.');
+                }
+            } else if (data.text && data.text.length > 200 && !data.isStoryModification) {
+                // For substantial non-modification responses, append to story
                 if (currentStory) {
                     currentStory += "\n\n---\n\n" + data.text;
                 } else {
@@ -1112,7 +1136,18 @@ function setupSocketEventHandlers() {
 
         socket.on('connect', () => {
             console.log('Connected to server');
-            addMessage('system', 'Connected to server');
+            addMessage('system', '🎲 Connected to D&D Story Assistant!');
+            
+            // Show helpful message about story modification features
+            const helpMessage = `💡 **Chat Features Available:**
+• Ask questions about D&D storytelling
+• Request story improvements: "improve the dialogue", "add more action", "enhance character development"
+• Modify existing stories: "rewrite this to be more dramatic", "expand the combat scene"
+• Get creative suggestions for your campaign
+
+${currentStory ? '📖 Your current story is loaded and ready for enhancement!' : '📄 Upload a file or start chatting to begin your D&D story!'}`;
+            
+            setTimeout(() => addMessage('system', helpMessage), 500);
         });
 
         socket.on('disconnect', () => {
