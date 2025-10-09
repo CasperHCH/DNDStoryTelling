@@ -1,17 +1,53 @@
 # 🐳 Docker Setup Guide for D&D Story Telling
 
-## 🚀 Quick Start with Docker
+## 🚀 Quick Start Options
+
+### 📱 **Choose Your Deployment Method:**
+
+1. **🖥️ Desktop/Server** - Windows/Linux/macOS with Docker Desktop
+2. **🏠 Synology NAS** - DS718+ and compatible models ([Complete NAS Guide](docs/SYNOLOGY_NAS_DEPLOYMENT.md))
+3. **☁️ Cloud Deployment** - AWS/Azure/GCP with container services
+4. **🔧 Development** - Local development with hot reload
+
+---
+
+## 🖥️ Desktop/Server Deployment
 
 ### Prerequisites
 - Docker Desktop installed and running
 - Docker Compose available
-- Your API keys (already configured below)
+- Your API keys (configure below)
+- 4GB+ RAM available
+- 10GB+ disk space
 
-### 🏃‍♂️ **1. Run with Docker Compose**
+### 🏃‍♂️ **1. Quick Start (Free Services)**
+
+```bash
+# Clone repository
+git clone https://github.com/YOUR-USERNAME/DNDStoryTelling.git
+cd DNDStoryTelling
+
+# Copy environment template
+cp .env.example .env
+
+# Edit .env file with your OpenAI API key
+# OPENAI_API_KEY=sk-your-key-here
+
+# Start application (SQLite mode - no database setup needed)
+docker-compose -f deployment/docker/docker-compose.free.yml up -d
+
+# View logs
+docker-compose -f deployment/docker/docker-compose.free.yml logs -f web
+
+# Access application
+# http://localhost:8001
+```
+
+### 🏃‍♂️ **2. Full Production Setup (PostgreSQL)**
 
 ```bash
 # Navigate to the Docker directory
-cd c:\repos\DNDStoryTelling\deployment\docker
+cd deployment/docker
 
 # Start all services (web app + PostgreSQL database)
 docker-compose up -d
@@ -22,6 +58,18 @@ docker-compose logs -f web
 # Stop all services
 docker-compose down
 ```
+
+### 🏠 **3. Synology NAS Deployment**
+
+For Synology DS718+ and compatible NAS devices, see our comprehensive guide:
+📖 **[Complete NAS Deployment Guide](docs/SYNOLOGY_NAS_DEPLOYMENT.md)**
+
+Quick overview:
+- One-click container import
+- Optimized for ARM64 architecture
+- Resource-efficient configuration
+- SQLite database (no PostgreSQL needed)
+- Perfect for home labs
 
 ### 🌐 **2. Access Your Application**
 
