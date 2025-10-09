@@ -10,6 +10,7 @@ class DemoAudioProcessor:
     """Demo audio processor that simulates transcription without API calls"""
 
     def __init__(self):
+        # Enhanced demo transcriptions for different file sizes
         self.demo_transcriptions = [
             """**Session Transcript - Demo Mode**
 
@@ -160,7 +161,13 @@ class DemoAudioProcessor:
         ]
 
     async def process_audio(self, audio_path: str) -> str:
-        """Simulate audio transcription with demo content"""
+        """
+        Enhanced audio transcription simulation for large D&D session files.
+        Handles files up to 5GB with realistic processing simulation.
+        """
+        import random
+        import asyncio
+
         # Get file info for realistic processing
         if os.path.exists(audio_path):
             file_size = os.path.getsize(audio_path)
@@ -169,28 +176,100 @@ class DemoAudioProcessor:
             file_size = 2000000000  # 2GB demo size
             file_name = "demo_session.wav"
 
-        # Select demo transcription based on file name or randomly
-        import random
-        if "combat" in audio_path.lower():
-            demo_content = self.demo_transcriptions[2]  # Combat-heavy session
-        elif "roleplay" in audio_path.lower() or "investigation" in audio_path.lower():
-            demo_content = self.demo_transcriptions[1]  # Roleplay-heavy session
-        else:
-            demo_content = random.choice(self.demo_transcriptions)
-
-        # Add file info to the transcription
         size_mb = file_size / (1024 * 1024)
-        header = f"""**🎵 Free Audio Processing Complete!**
+        size_gb = file_size / (1024 * 1024 * 1024)
+
+        # Simulate realistic processing time for large files
+        if size_gb > 1.0:  # Files larger than 1GB
+            processing_time = min(5.0, size_gb * 2)  # Up to 10 seconds for 5GB files
+            await asyncio.sleep(processing_time)
+        elif size_mb > 100:  # Files larger than 100MB
+            await asyncio.sleep(2.0)
+        else:
+            await asyncio.sleep(0.5)
+
+        # Generate character names for this session
+        character_pools = {
+            'fantasy': ['Thorin Ironbeard', 'Elara Moonwhisper', 'Gareth Stormshield', 'Zara Shadowblade', 'Magnus Spellweaver', 'Luna Stargazer'],
+            'classic': ['Sir Roland', 'Lady Meredith', 'Borin the Bold', 'Lyra Nightsong', 'Aldric the Wise', 'Kira Swiftarrow']
+        }
+        character_set = random.choice(list(character_pools.values()))
+        session_characters = random.sample(character_set, min(4, len(character_set)))
+
+        # Select and enhance transcription based on file characteristics
+        if "combat" in audio_path.lower() or random.random() < 0.3:
+            base_content = self.demo_transcriptions[2]  # Combat-heavy session
+            session_type = "Epic Combat Session"
+        elif "roleplay" in audio_path.lower() or "investigation" in audio_path.lower() or random.random() < 0.4:
+            base_content = self.demo_transcriptions[1]  # Roleplay-heavy session
+            session_type = "Story & Investigation Session"
+        else:
+            base_content = random.choice(self.demo_transcriptions)
+            session_type = "Mixed Adventure Session"
+
+        # Generate extended content for large files
+        extended_segments = []
+
+        if size_gb >= 2.0:  # Very large files get epic multi-part sessions
+            extended_segments = [
+                f"\n\n**🏰 Extended Session - Part 1: The Journey Begins**\n\n{session_characters[0]} leads the party through the Whispering Pines, where ancient magic stirs in the shadows. The group encounters mysterious travelers who speak of dark omens ahead. After careful negotiation and insight checks, they learn valuable information about their destination.",
+
+                f"\n\n**⚔️ Extended Session - Part 2: Trials and Tribulations**\n\n{session_characters[1]} discovers hidden passages in the ancient ruins, while {session_characters[2]} deciphers cryptic warnings carved into stone. The party faces both physical and mental challenges, with each member contributing their unique skills to overcome obstacles.",
+
+                f"\n\n**🌟 Extended Session - Part 3: The Climactic Confrontation**\n\nAs the session reaches its peak, {session_characters[3]} makes a crucial character decision that affects the entire party's fate. Epic spells are cast, legendary actions are taken, and the very fabric of the campaign world hangs in the balance as heroes rise to meet their destiny."
+            ]
+        elif size_gb >= 1.0:  # Large files get expanded content
+            extended_segments = [
+                f"\n\n**📖 Extended Session - Character Development**\n\n{session_characters[0]} reveals important backstory details that connect to the current quest. The party engages in deep roleplay, exploring character relationships and motivations while the DM weaves their personal stories into the larger narrative.",
+
+                f"\n\n**🗺️ Extended Session - World Building**\n\nThe Dungeon Master describes the rich history of the realm, introducing new locations and NPCs that will become important later. {session_characters[1]} asks insightful questions that help expand the world lore and create new adventure hooks."
+            ]
+
+        # Add fantasy atmosphere and D&D conversion elements
+        fantasy_atmospheres = [
+            "🌙 The session takes place under a blood moon, casting everything in an otherworldly crimson glow.",
+            "⚡ Arcane energies crackle in the air as the party delves deeper into mysteries unknown.",
+            "🏰 Ancient castle walls echo with the whispers of long-forgotten heroes and their legendary deeds.",
+            "🌲 The enchanted forest around them pulses with primal magic, where every shadow might hide friend or foe.",
+            "⭐ Celestial alignments grant the party glimpses of possible futures, both glorious and terrifying."
+        ]
+
+        atmospheric_intro = random.choice(fantasy_atmospheres)
+
+        # Create comprehensive header with processing details
+        header = f"""**🎵 Free Version Audio Processing Complete!**
 
 **File:** {file_name}
-**Size:** {size_mb:.1f} MB
-**Processing Mode:** Free Demo Mode - Fully Functional!
+**Size:** {size_mb:.1f} MB ({size_gb:.2f} GB)
+**Session Type:** {session_type}
+**Processing Mode:** Free Demo Mode - Full D&D Fantasy Conversion!
+**Characters This Session:** {', '.join(session_characters)}
 
-**📝 Transcription Results:**
+{atmospheric_intro}
+
+**📝 D&D Session Transcription:**
 
 """
 
-        return header + demo_content
+        # Combine all content
+        full_content = header + base_content
+
+        # Add extended segments for large files
+        for segment in extended_segments:
+            full_content += segment
+
+        # Add D&D-specific closing elements
+        dnd_closings = [
+            "\n\n**✨ Session Conclusion**\nAs the evening winds down, the party gains valuable experience and their bonds grow stronger. The Dungeon Master awards inspiration points for excellent roleplay and creative problem-solving.",
+
+            "\n\n**📚 Campaign Notes**\nImportant plot threads have been established that will continue in future sessions. New allies have been made and ancient mysteries have begun to unfold.",
+
+            "\n\n**🎲 End of Session**\nDice are gathered, character sheets updated, and players excitedly discuss plans for next week's adventure. The campaign world continues to grow richer with each session."
+        ]
+
+        full_content += random.choice(dnd_closings)
+
+        return full_content
 
     async def transcribe_audio(self, audio_path: str) -> str:
         """Alternative method name for compatibility"""

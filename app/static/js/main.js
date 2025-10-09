@@ -1096,7 +1096,7 @@ function setupSocketEventHandlers() {
                 // Replace the current story with the modified version
                 currentStory = data.text;
                 addMessage('system', '✨ Story has been modified based on your request!');
-                
+
                 // Update session data
                 if (currentSessionData) {
                     currentSessionData.story = currentStory;
@@ -1105,7 +1105,7 @@ function setupSocketEventHandlers() {
 
                 // Update export button states
                 updateExportButtons();
-                
+
                 // Optionally show a preview of the change
                 if (data.originalStory && data.originalStory !== data.text) {
                     addMessage('system', '📝 Story updated! Use export options to save your enhanced version.');
@@ -1137,7 +1137,7 @@ function setupSocketEventHandlers() {
         socket.on('connect', () => {
             console.log('Connected to server');
             addMessage('system', '🎲 Connected to D&D Story Assistant!');
-            
+
             // Show helpful message about story modification features
             const helpMessage = `💡 **Chat Features Available:**
 • Ask questions about D&D storytelling
@@ -1146,7 +1146,7 @@ function setupSocketEventHandlers() {
 • Get creative suggestions for your campaign
 
 ${currentStory ? '📖 Your current story is loaded and ready for enhancement!' : '📄 Upload a file or start chatting to begin your D&D story!'}`;
-            
+
             setTimeout(() => addMessage('system', helpMessage), 500);
         });
 

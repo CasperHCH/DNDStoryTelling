@@ -12,15 +12,15 @@ async def test_chat_logic():
     """Test the chat message handling logic"""
     print("🎯 Testing Enhanced Chat Functionality with Story Modification")
     print("="*60)
-    
+
     # Mock data that would come from Socket.IO
     test_messages = [
         "How can I make my combat more exciting?",
-        "Help me develop my character's backstory", 
+        "Help me develop my character's backstory",
         "What should I add to my world setting?",
         "How can I improve dialogue in my campaign?"
     ]
-    
+
     # Test story modification messages
     story_modification_messages = [
         "improve the dialogue in this story",
@@ -30,25 +30,25 @@ async def test_chat_logic():
         "expand on the world building",
         "fix the pacing in this story"
     ]
-    
+
     print("\n🧪 Testing Story Modification Detection:")
     print("-" * 40)
-    
+
     modification_keywords = [
-        'rewrite', 'improve', 'enhance', 'modify', 'change', 'update', 
+        'rewrite', 'improve', 'enhance', 'modify', 'change', 'update',
         'add to', 'expand', 'revise', 'edit', 'fix', 'better', 'more'
     ]
-    
+
     for message in story_modification_messages:
         is_modification = any(keyword in message.lower() for keyword in modification_keywords)
         print(f"'{message}' → {'✅ STORY MODIFICATION' if is_modification else '❌ Regular chat'}")
-    
-    sample_story = """The party entered the dark dungeon, their torches flickering in the damp air. 
+
+    sample_story = """The party entered the dark dungeon, their torches flickering in the damp air.
 The fighter raised his sword while the wizard prepared a spell."""
-    
+
     print(f"\n📖 Sample Story Context ({len(sample_story)} characters):")
     print(f"   '{sample_story[:80]}...'")
-    
+
     print("\n🔄 Expected Behavior for Story Modifications:")
     print("-" * 50)
     print("1. ✅ When user has a current story AND uses modification keywords:")
@@ -56,7 +56,7 @@ The fighter raised his sword while the wizard prepared a spell."""
     print("   - AI provides enhanced/modified version of the entire story")
     print("   - Frontend replaces currentStory with the improved version")
     print("   - User sees: '✨ Story has been modified based on your request!'")
-    
+
     print("\n2. ✅ When user asks general questions:")
     print("   - Backend provides general D&D advice and suggestions")
     print("   - Frontend appends substantial responses to story if >200 chars")

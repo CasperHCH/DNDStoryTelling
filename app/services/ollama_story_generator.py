@@ -11,43 +11,86 @@ import asyncio
 import httpx
 import json
 import logging
-from typing import Optional
+from typing import Optional, Dict, Any, List
+
+from app.services.segmented_story_processor import SegmentedStoryProcessor
 
 logger = logging.getLogger(__name__)
 
-class OllamaStoryGenerator:
+class OllamaStoryGenerator(SegmentedStoryProcessor):
     """
     Free local AI story generator using Ollama.
     Zero cost, works completely offline!
     """
 
     def __init__(self, base_url: str = "http://localhost:11434", model: str = "llama3.2:3b"):
+        super().__init__(max_segment_tokens=2500, overlap_tokens=150)  # Conservative for local models
         self.base_url = base_url
         self.model = model
         self.client = httpx.AsyncClient(timeout=120.0)
 
-    async def generate_story(self, prompt: str, context) -> str:
-        """Generate a story using local Ollama model."""
+    async def generate_story(self, text: str, context) -> str:
+        """
+        Generate a story using local Ollama model with comprehensive transcription processing.
+        Ensures ALL content is processed regardless of size.
+        """
+        logger.info(f"Starting Ollama story generation for {self.estimate_tokens(text)} estimated tokens")
+
         try:
             # Check if Ollama is running
             await self._check_ollama_status()
-
-            # Ensure model is available
             await self._ensure_model_available()
 
-            # Create the full prompt
-            full_prompt = self._create_prompt(prompt, context)
-
-            # Generate story with Ollama
-            story = await self._generate_with_ollama(full_prompt)
-
-            logger.info(f"Story generated successfully with {self.model}")
-            return story
+            # Use segmented processing to handle large transcriptions
+            return await self.process_full_transcription(text, context)
 
         except Exception as e:
             logger.error(f"Ollama story generation failed: {e}")
             # Fallback to enhanced demo mode
-            return self._create_fallback_story(prompt, context)
+            return self._create_fallback_story(text, context)
+
+    async def _process_single_segment(self, segment: Dict[str, Any], context: Any) -> str:
+        """Process a single segment when transcription is small enough."""
+        prompt = self._create_prompt(segment['content'], context)
+        return await self._generate_with_ollama(prompt)
+
+    async def _process_segment_with_context(self, segment: Dict[str, Any], context: Dict[str, Any], elements: Dict[str, Any]) -> str:
+        """Process a segment with accumulated context from previous segments."""
+        enhanced_prompt = self._create_segment_prompt(segment['content'], context, elements, segment)
+        return await self._generate_with_ollama(enhanced_prompt)
+
+    async def _synthesize_complete_story(self, segment_summaries: List[Dict[str, Any]], original_context: Any) -> str:
+        """Synthesize all segment summaries into final coherent story."""
+        # Combine all summaries
+        all_summaries = [s['summary'] for s in segment_summaries]
+        combined_content = "\n\n---\n\n".join(all_summaries)
+
+        # Create synthesis prompt
+        synthesis_prompt = self._create_synthesis_prompt(combined_content, segment_summaries, original_context)
+
+        # Generate final unified story
+        final_story = await self._generate_with_ollama(synthesis_prompt)
+
+        # Add session statistics
+        total_characters = len(self.session_memory['characters'])
+        total_locations = len(self.session_memory['locations'])
+
+        header = f"""# 🎲 Complete D&D Session Story (Ollama Local AI)
+
+*This story was generated locally using Ollama, processing ALL {len(segment_summaries)} segments of your session transcription with complete privacy.*
+
+**Session Statistics:**
+- Characters Identified: {total_characters}
+- Locations Visited: {total_locations}
+- Segments Processed: {len(segment_summaries)}
+- Complete Story: Yes ✅
+- Processing: Local & Private 🔒
+
+---
+
+"""
+
+        return header + final_story
 
     async def _check_ollama_status(self):
         """Check if Ollama service is running."""
@@ -150,6 +193,64 @@ Create an engaging, detailed narrative summary that:
 6. Uses proper D&D terminology and style
 
 Write the story in past tense, third person, as if recounting the session to other players. Make it exciting and immersive!"""
+
+    def _create_segment_prompt(self, text: str, context: Dict[str, Any], elements: Dict[str, Any], segment_info: Dict[str, Any]) -> str:
+        """Create prompt for processing a segment with context from previous segments."""
+        session_name = context.get('session_name', 'Unknown Session')
+        setting = context.get('setting', 'D&D Fantasy')
+        characters = context.get('characters', [])
+        previous_events = context.get('previous_events', [])
+
+        characters_str = ', '.join(characters) if characters else 'Unknown characters'
+        previous_str = '. '.join(previous_events) if previous_events else 'Beginning of session'
+
+        segment_characters = ', '.join(elements['characters']) if elements['characters'] else 'None discovered'
+        segment_locations = ', '.join(elements['locations']) if elements['locations'] else 'None specified'
+
+        return f"""You are an expert D&D storyteller processing part {segment_info['segment_id']} of {segment_info['total_segments']} from a session.
+
+Session Context:
+- Session: {session_name}
+- Setting: {setting}
+- Known Characters: {characters_str}
+- Previous Events: {previous_str}
+
+This Segment:
+- Characters: {segment_characters}
+- Locations: {segment_locations}
+- Part: {segment_info['segment_id']}/{segment_info['total_segments']}
+
+Content:
+{text}
+
+Create a vivid narrative for this part that connects to the ongoing story. Focus on character actions, dialogue, and atmospheric descriptions. Make it engaging and maintain continuity with previous events."""
+
+    def _create_synthesis_prompt(self, combined_content: str, segment_summaries: List[Dict[str, Any]], original_context: Any) -> str:
+        """Create prompt for synthesizing all segments into final story."""
+        if hasattr(original_context, 'model_dump'):
+            session_name = getattr(original_context, 'session_name', 'Epic D&D Session')
+            setting = getattr(original_context, 'setting', 'D&D Fantasy')
+        else:
+            session_name = original_context.get('session_name', 'Epic D&D Session') if original_context else 'Epic D&D Session'
+            setting = original_context.get('setting', 'D&D Fantasy') if original_context else 'D&D Fantasy'
+
+        all_characters = list(self.session_memory['characters'])
+        all_locations = list(self.session_memory['locations'])
+
+        characters_str = ', '.join(all_characters) if all_characters else 'Various adventurers'
+        locations_str = ', '.join(all_locations) if all_locations else 'Multiple locations'
+
+        return f"""You are creating the final story from {len(segment_summaries)} parts of a D&D session.
+
+Session: {session_name}
+Setting: {setting}
+All Characters: {characters_str}
+All Locations: {locations_str}
+
+Story Parts:
+{combined_content}
+
+Weave these parts into one complete, engaging D&D session story. Maintain chronological order, develop character arcs, and create a satisfying narrative flow. This should read as one unified adventure, not separate pieces."""
 
     def _create_fallback_story(self, prompt: str, context) -> str:
         """Create fallback story when Ollama is not available."""
