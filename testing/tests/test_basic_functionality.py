@@ -107,7 +107,7 @@ class TestDatabaseConnectivity:
             )
             session.add(test_user)
             await session.flush()  # Flush instead of commit to keep session active
-            
+
             user_id = test_user.id
             assert user_id is not None
 
@@ -163,7 +163,7 @@ class TestModelInstantiation:
     def test_story_model_creation(self):
         """Test Story model can be instantiated."""
         now = datetime.utcnow()
-        
+
         story = Story(
             session_name="Test Session",
             narrative="Test narrative",
@@ -304,7 +304,7 @@ class TestDataValidation:
             assert "@" in valid.normalized
         except EmailNotValidError:
             pytest.fail("Valid email rejected")
-        
+
         # Invalid email format
         with pytest.raises(EmailNotValidError):
             validate_email("invalid-email", check_deliverability=False)

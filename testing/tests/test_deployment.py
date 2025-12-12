@@ -24,7 +24,7 @@ class TestDockerDeployment:
             Path("Dockerfile"),
             Path("deployment/Dockerfile")
         ]
-        
+
         found = any(p.exists() for p in docker_paths)
         assert found, "Dockerfile not found in expected locations"
 
@@ -35,7 +35,7 @@ class TestDockerDeployment:
             Path("deployment/docker/docker-compose.yml"),
             Path("deployment/docker-compose.yml")
         ]
-        
+
         found = any(p.exists() for p in compose_paths)
         if not found:
             pytest.skip("docker-compose.yml not configured yet")
@@ -49,15 +49,15 @@ class TestDockerDeployment:
             Path("deployment/docker/Dockerfile"),
             Path("Dockerfile"),
         ]
-        
+
         for path in docker_paths:
             if path.exists():
                 dockerfile_path = path
                 break
-        
+
         if not dockerfile_path:
             pytest.skip("Dockerfile not found")
-        
+
         # Try to build image
         result = subprocess.run(
             ["docker", "build", "-t", "dnd-storytelling-test", "-f", str(dockerfile_path), "."],
@@ -65,7 +65,7 @@ class TestDockerDeployment:
             text=True,
             timeout=300
         )
-        
+
         assert result.returncode == 0, f"Docker build failed: {result.stderr}"
 
     @pytest.mark.skip(reason="Docker run test requires running container - manual verification recommended")
@@ -77,7 +77,7 @@ class TestDockerDeployment:
             capture_output=True,
             text=True
         )
-        
+
         assert result.returncode == 0, "Docker is not available"
 
 
@@ -91,13 +91,13 @@ class TestDatabaseMigrations:
             Path("configuration/alembic.ini"),
             Path("alembic.ini/alembic.ini")  # Check if it's a directory
         ]
-        
+
         found = False
         for path in alembic_paths:
             if path.exists():
                 found = True
                 break
-        
+
         assert found, "alembic.ini not found"
 
     def test_alembic_env_exists(self):
@@ -114,13 +114,13 @@ class TestDatabaseMigrations:
     def test_migration_files_present(self):
         """Test at least one migration file exists."""
         versions_path = Path("alembic/versions")
-        
+
         if not versions_path.exists():
             pytest.skip("Migrations directory not found")
-        
+
         migration_files = list(versions_path.glob("*.py"))
         migration_files = [f for f in migration_files if f.name != "__init__.py" and f.name != "__pycache__"]
-        
+
         # It's okay if no migrations exist yet (fresh project)
         # Just verify the structure is in place
         assert versions_path.exists(), "Migration infrastructure should be present"
@@ -130,26 +130,26 @@ class TestDatabaseMigrations:
         """Test migrations are up to date with models."""
         # This would require running: alembic current and alembic heads
         # and comparing them to ensure no pending migrations
-        
+
         result = subprocess.run(
             ["alembic", "current"],
             capture_output=True,
             text=True
         )
-        
+
         if result.returncode != 0:
             pytest.skip("Alembic not configured or database not accessible")
-        
+
         current = result.stdout.strip()
-        
+
         result = subprocess.run(
             ["alembic", "heads"],
             capture_output=True,
             text=True
         )
-        
+
         heads = result.stdout.strip()
-        
+
         # If current is empty, migrations haven't been run
         # If current != heads, there are pending migrations
         if current and heads:
@@ -162,10 +162,10 @@ class TestEnvironmentConfiguration:
     def test_env_example_exists(self):
         """Test .env.example file exists."""
         env_example = Path(".env.example")
-        
+
         if not env_example.exists():
             pytest.skip(".env.example not created yet")
-        
+
         # If it exists, verify it has key variables
         content = env_example.read_text()
         assert "DATABASE_URL" in content
@@ -175,19 +175,19 @@ class TestEnvironmentConfiguration:
         """Test .env file has required variables."""
         # Check if .env exists (might not in CI/CD)
         env_file = Path(".env")
-        
+
         if not env_file.exists():
             pytest.skip(".env file not present (expected in CI/CD)")
-        
+
         content = env_file.read_text()
-        
+
         # Required variables
         required_vars = [
             "DATABASE_URL",
             "SECRET_KEY",
             "ENVIRONMENT"
         ]
-        
+
         for var in required_vars:
             assert var in content, f"Required variable {var} not found in .env"
 
@@ -213,7 +213,7 @@ class TestDependencies:
         """Test requirements.txt has core dependencies."""
         requirements = Path("requirements.txt")
         content = requirements.read_text().lower()
-        
+
         core_deps = [
             "fastapi",
             "sqlalchemy",
@@ -221,17 +221,17 @@ class TestDependencies:
             "uvicorn",
             "pytest"
         ]
-        
+
         for dep in core_deps:
             assert dep in content, f"Core dependency {dep} not found in requirements.txt"
 
     def test_test_requirements_exists(self):
         """Test test-requirements.txt exists."""
         test_requirements = Path("test-requirements.txt")
-        
+
         if not test_requirements.exists():
             pytest.skip("test-requirements.txt not created yet")
-        
+
         content = test_requirements.read_text().lower()
         assert "pytest" in content
 
@@ -280,20 +280,20 @@ class TestDocumentation:
         """Test README has deployment instructions."""
         readme = Path("README.md")
         content = readme.read_text(encoding='utf-8').lower()
-        
+
         # Should have some deployment-related content
         deployment_keywords = ["deploy", "installation", "setup", "docker", "getting started"]
         found = any(keyword in content for keyword in deployment_keywords)
-        
+
         assert found, "README should contain deployment/setup instructions"
 
     def test_docker_guide_exists(self):
         """Test Docker setup guide exists."""
         docker_guide = Path("DOCKER_SETUP_GUIDE.md")
-        
+
         if not docker_guide.exists():
             pytest.skip("Docker setup guide not created yet")
-        
+
         content = docker_guide.read_text(encoding='utf-8')
         assert len(content) > 100, "Docker guide should have substantial content"
 
@@ -304,11 +304,11 @@ class TestLogging:
     def test_logs_directory_structure(self):
         """Test logs directory exists or can be created."""
         logs_dir = Path("logs")
-        
+
         if not logs_dir.exists():
             # It's okay if it doesn't exist yet - will be created at runtime
             pytest.skip("Logs directory will be created at runtime")
-        
+
         assert logs_dir.is_dir(), "logs should be a directory"
 
     def test_logging_configuration_present(self):
