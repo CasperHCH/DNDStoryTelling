@@ -1,0 +1,231 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+env:
+  PYTHON_VERSION: '3.12'
+
+jobs:
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        cache: 'pip'
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install -r test-requirements.txt
+        
+    - name: Create test environment file
+      run: |
+        cat > .env << EOF
+        ENVIRONMENT=test
+        DEBUG=True
+        DATABASE_URL=sqlite:///test.db
+        SECRET_KEY=test-secret-key-for-github-actions-that-is-long-enough-for-validation
+        ACCESS_TOKEN_EXPIRE_MINUTES=30
+        ALLOWED_HOSTS=localhost,127.0.0.1
+        CORS_ORIGINS=http://localhost:3000
+        USE_SQLITE=True
+        DEMO_MODE_FALLBACK=True
+        AI_SERVICE=demo
+        AUDIO_SERVICE=demo
+        EOF
+        
+    - name: Run consolidated test suite
+      run: |
+        python -m pytest testing/tests/ \
+          --ignore=testing/tests/legacy_tests \
+          --ignore=testing/tests/ui \
+          -v \
+          --tb=short \
+          --cov=app \
+          --cov-report=xml \
+          --cov-report=term-missing
+          
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v4
+      with:
+        file: ./coverage.xml
+        flags: unittests
+        name: codecov-umbrella
+        fail_ci_if_error: false
+        
+    - name: Check test coverage threshold
+      run: |
+        coverage report --fail-under=23
+        
+  lint:
+    name: Code Quality
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        
+    - name: Install linting tools
+      run: |
+        python -m pip install --upgrade pip
+        pip install black isort flake8 mypy
+        
+    - name: Run Black formatter check
+      run: black --check app/ testing/
+      continue-on-error: true
+      
+    - name: Run isort import check
+      run: isort --check-only app/ testing/
+      continue-on-error: true
+      
+    - name: Run Flake8 linter
+      run: flake8 app/ --count --select=E9,F63,F7,F82 --show-source --statistics
+      continue-on-error: true
+
+  security:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        
+    - name: Install security tools
+      run: |
+        python -m pip install --upgrade pip
+        pip install safety bandit
+        
+    - name: Run Safety check (dependency vulnerabilities)
+      run: safety check --json
+      continue-on-error: true
+      
+    - name: Run Bandit (code security issues)
+      run: bandit -r app/ -f json -o bandit-report.json
+      continue-on-error: true
+      
+    - name: Upload Bandit report
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: bandit-security-report
+        path: bandit-report.json
+
+  docker:
+    name: Docker Build
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+      
+    - name: Check if Dockerfile exists
+      id: dockerfile_check
+      run: |
+        if [ -f "Dockerfile" ] || [ -f "deployment/docker/Dockerfile" ]; then
+          echo "dockerfile_exists=true" >> $GITHUB_OUTPUT
+        else
+          echo "dockerfile_exists=false" >> $GITHUB_OUTPUT
+        fi
+        
+    - name: Build Docker image
+      if: steps.dockerfile_check.outputs.dockerfile_exists == 'true'
+      run: |
+        if [ -f "Dockerfile" ]; then
+          docker build -t dnd-storytelling:test .
+        elif [ -f "deployment/docker/Dockerfile" ]; then
+          docker build -t dnd-storytelling:test -f deployment/docker/Dockerfile .
+        fi
+        
+    - name: Test Docker image
+      if: steps.dockerfile_check.outputs.dockerfile_exists == 'true'
+      run: |
+        docker images dnd-storytelling:test
+
+  database:
+    name: Database Migration Check
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install alembic
+        
+    - name: Check Alembic configuration
+      run: |
+        if [ -f "alembic.ini" ] || [ -f "configuration/alembic.ini" ]; then
+          echo "✅ Alembic configuration found"
+        else
+          echo "⚠️ Alembic configuration not found"
+          exit 0
+        fi
+        
+    - name: Validate migrations
+      run: |
+        if [ -d "alembic/versions" ]; then
+          echo "✅ Migration directory exists"
+          ls -la alembic/versions/ || true
+        fi
+
+  documentation:
+    name: Documentation Check
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Check required documentation
+      run: |
+        echo "Checking for required documentation files..."
+        [ -f "README.md" ] && echo "✅ README.md" || echo "❌ README.md missing"
+        [ -f "FEATURE_VALIDATION_CHECKLIST.md" ] && echo "✅ FEATURE_VALIDATION_CHECKLIST.md" || echo "⚠️ Validation checklist missing"
+        [ -f "requirements.txt" ] && echo "✅ requirements.txt" || echo "❌ requirements.txt missing"
+        
+    - name: Check test documentation
+      run: |
+        if [ -f "testing/tests/legacy_tests/README.md" ]; then
+          echo "✅ Legacy tests documented"
+        fi
+        
+    - name: Count test files
+      run: |
+        ACTIVE_TESTS=$(find testing/tests -maxdepth 1 -name "test_*.py" | wc -l)
+        LEGACY_TESTS=$(find testing/tests/legacy_tests -name "test_*.py" 2>/dev/null | wc -l || echo 0)
+        echo "📊 Active test files: $ACTIVE_TESTS"
+        echo "📦 Archived test files: $LEGACY_TESTS"

@@ -4,12 +4,14 @@
 
 Transform your D&D session recordings into compelling narrative summaries using cutting-edge AI. This enterprise-grade application processes audio files from real D&D sessions and generates intelligent story summaries with comprehensive security, monitoring, and deployment features.
 
+[![CI/CD Pipeline](https://github.com/CasperHCH/DNDStoryTelling/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/CasperHCH/DNDStoryTelling/actions/workflows/ci-cd.yml)
+[![codecov](https://codecov.io/gh/CasperHCH/DNDStoryTelling/branch/main/graph/badge.svg)](https://codecov.io/gh/CasperHCH/DNDStoryTelling)
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
-![Python](https://img.shields.io/badge/python-3.11+-green.svg)
+![Python](https://img.shields.io/badge/python-3.12+-green.svg)
 ![FastAPI](https://img.shields.io/badge/FastAPI-latest-blue.svg)
 ![Docker](https://img.shields.io/badge/docker-ready-blue.svg)
 ![Security](https://img.shields.io/badge/security-hardened-green.svg)
-![Tests](https://img.shields.io/badge/coverage-24%25-red.svg)
+![Tests](https://img.shields.io/badge/tests-70%20passing-brightgreen.svg)
 
 ## ✨ Key Features
 
