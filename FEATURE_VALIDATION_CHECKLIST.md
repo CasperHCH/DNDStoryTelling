@@ -379,18 +379,24 @@ python -m pytest testing/tests/ --cov=app --cov-report=html
    - Add integration tests for file upload
    - Estimated effort: 1 day
 
-4. **Update Legacy Tests**
-   - Archive or fix test_auth_routes_comprehensive.py
-   - Archive or fix test_auth_units.py
-   - Estimated effort: 4 hours
+4. **Update Legacy Tests** ✅ **COMPLETED**
+   - ✅ Archived 30 legacy test files to `legacy_tests/` folder
+   - ✅ Maintained 4 focused test suites (70 tests, 93% pass rate)
+   - ✅ Documented archive with comprehensive README
+   - Completed: December 12, 2025
 
 ### Medium Priority
 
-5. **CI/CD Pipeline**
-   - Set up GitHub Actions
-   - Automated testing on push
-   - Docker build verification
-   - Estimated effort: 1 day
+5. **CI/CD Pipeline** ✅ **COMPLETED**
+   - ✅ GitHub Actions workflow created (`.github/workflows/ci-cd.yml`)
+   - ✅ Automated testing on push to main/develop branches
+   - ✅ Docker build verification added
+   - ✅ Security scanning (Safety, Bandit)
+   - ✅ Code quality checks (Black, isort, Flake8)
+   - ✅ Documentation validation
+   - ✅ Codecov integration configured
+   - ✅ Comprehensive pipeline documentation
+   - Completed: December 12, 2025
 
 6. **Security Enhancements**
    - Implement rate limiting on auth endpoints
