@@ -59,6 +59,7 @@ addopts = [
 markers = [
     "unit: Unit tests",
     "integration: Integration tests",
+    "functional: Functional tests",
     "performance: Performance benchmarking tests",
     "audio: Audio processing tests",
     "security: Security tests",

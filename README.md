@@ -9,7 +9,7 @@ Transform your D&D session recordings into compelling narrative summaries using 
 ![FastAPI](https://img.shields.io/badge/FastAPI-latest-blue.svg)
 ![Docker](https://img.shields.io/badge/docker-ready-blue.svg)
 ![Security](https://img.shields.io/badge/security-hardened-green.svg)
-![Tests](https://img.shields.io/badge/coverage-95%25-green.svg)
+![Tests](https://img.shields.io/badge/coverage-24%25-red.svg)
 
 ## ✨ Key Features
 
