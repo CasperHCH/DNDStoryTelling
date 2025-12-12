@@ -64,7 +64,7 @@ async def login(
         )
 
 
-@router.post("/register")
+@router.post("/register", status_code=status.HTTP_201_CREATED)
 async def register(user_data: UserRegister, db: AsyncSession = Depends(get_db)) -> Dict[str, str]:
     """Register a new user."""
     try:

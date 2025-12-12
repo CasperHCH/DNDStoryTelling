@@ -14,7 +14,13 @@ from app.config import get_settings
 from app.models.database import get_db
 from app.models.user import User
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+# Configure passlib with bcrypt - compatible with bcrypt 4.0+
+pwd_context = CryptContext(
+    schemes=["bcrypt"],
+    deprecated="auto",
+    bcrypt__rounds=12,
+    bcrypt__ident="2b",  # Use 2b variant which is better supported
+)
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/token")
 
 

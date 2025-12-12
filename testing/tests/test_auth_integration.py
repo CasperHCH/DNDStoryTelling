@@ -41,7 +41,7 @@ async def get_test_db():
             await session.close()
 
 
-@pytest.fixture(scope="function")
+@pytest_asyncio.fixture
 async def test_db():
     """Create test database tables and clean up after each test."""
     # Create tables
@@ -55,7 +55,7 @@ async def test_db():
         await conn.run_sync(Base.metadata.drop_all)
 
 
-@pytest.fixture(scope="function")
+@pytest_asyncio.fixture
 async def client(test_db):
     """Create test client with test database."""
     app.dependency_overrides[get_db] = get_test_db
@@ -128,7 +128,7 @@ class TestAuthenticationIntegration:
 
         assert response.status_code == 400
         data = response.json()
-        assert "already exists" in data["detail"].lower()
+        assert "already registered" in data["detail"].lower()
 
     @pytest.mark.asyncio
     async def test_register_duplicate_email(self, client, test_user):
@@ -143,7 +143,7 @@ class TestAuthenticationIntegration:
 
         assert response.status_code == 400
         data = response.json()
-        assert "already exists" in data["detail"].lower()
+        assert "already registered" in data["detail"].lower()
 
     @pytest.mark.asyncio
     async def test_login_valid_credentials(self, client, test_user):

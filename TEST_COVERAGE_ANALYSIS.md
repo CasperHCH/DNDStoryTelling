@@ -1,6 +1,6 @@
 # 📊 Test Coverage Analysis Report
-**Generated**: December 12, 2025  
-**Project**: D&D Story Telling Application  
+**Generated**: December 12, 2025
+**Project**: D&D Story Telling Application
 **Testing Framework**: pytest 7.4.3 with pytest-cov 4.1.0
 
 ## Executive Summary
